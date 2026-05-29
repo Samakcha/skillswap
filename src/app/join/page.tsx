@@ -2,11 +2,13 @@
 
 import { createClient } from '@/lib/supabase'
 import SplitText from '@/components/SplitText'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, AlertCircle, ArrowLeft, UserPlus, MapPin, Users, Layers, ArrowRight, ShieldCheck } from 'lucide-react'
+
+const BACKGROUND_VIDEO_SRC = 'https://labs.google/fx/api/og-video/shared/966a806e-8af1-4aed-944e-79606693e083'
 
 // Framer Motion Animation Presets
 const FADE_UP = {
@@ -24,6 +26,36 @@ export default function JoinNeighborhoodPage() {
   const [postCount, setPostCount] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [joining, setJoining] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const startVideo = () => {
+      video.play().catch(() => {})
+    }
+
+    video.play().catch(() => {
+      window.addEventListener('click', startVideo, { once: true })
+      window.addEventListener('touchstart', startVideo, { once: true })
+    })
+
+    const handleTimeUpdate = () => {
+      if (video.currentTime >= 10) {
+        video.currentTime = 0
+        video.play().catch(() => {})
+      }
+    }
+
+    video.addEventListener('timeupdate', handleTimeUpdate)
+
+    return () => {
+      window.removeEventListener('click', startVideo)
+      window.removeEventListener('touchstart', startVideo)
+      video.removeEventListener('timeupdate', handleTimeUpdate)
+    }
+  }, [])
 
   useEffect(() => {
     async function validateInvite() {
@@ -133,13 +165,14 @@ export default function JoinNeighborhoodPage() {
     <main className="min-h-screen bg-[#070709] text-white flex items-center justify-center p-4 sm:p-6 md:p-8 font-sans selection:bg-[#FF4D00] selection:text-black relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none select-none">
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
           className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale contrast-125"
         >
-          <source src="/assets/bgvideo-pingpong.mp4" type="video/mp4" />
+          <source src={BACKGROUND_VIDEO_SRC} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>

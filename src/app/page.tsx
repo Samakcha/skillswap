@@ -18,6 +18,8 @@ const SERVICES = [
   { index: "05", title: "WELLNESS & BODY", tags: ["VINYASA YOGA", "MINDFULNESS MEDITATION", "NUTRITION", "PILATES"] }
 ]
 
+const BACKGROUND_VIDEO_SRC = 'https://labs.google/fx/api/og-video/shared/966a806e-8af1-4aed-944e-79606693e083'
+
 export default function Home() {
   const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "table_missing" | "error">("checking")
   const [dbMessage, setDbMessage] = useState("")
@@ -41,9 +43,19 @@ export default function Home() {
         window.addEventListener('touchstart', startVideo, { once: true });
       });
 
+      const handleTimeUpdate = () => {
+        if (video.currentTime >= 10) {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        }
+      };
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+
       return () => {
         window.removeEventListener('click', startVideo);
         window.removeEventListener('touchstart', startVideo);
+        video.removeEventListener('timeupdate', handleTimeUpdate);
       };
     }
   }, []);
@@ -200,7 +212,7 @@ export default function Home() {
             playsInline
             className="absolute inset-0 w-full h-full object-cover opacity-25 grayscale contrast-125"
           >
-            <source src="/assets/bgvideo-pingpong.mp4" type="video/mp4" />
+            <source src={BACKGROUND_VIDEO_SRC} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color pointer-events-none" />
         </motion.div>

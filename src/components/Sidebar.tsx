@@ -110,7 +110,7 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
           ]
         },
         {
-          duration: 550,
+          duration: 900,
           easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
           pseudoElement: '::view-transition-new(root)'
         }

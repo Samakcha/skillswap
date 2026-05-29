@@ -26,6 +26,8 @@ const CONTAINER_STAGGER = {
   }
 }
 
+const BACKGROUND_VIDEO_SRC = 'https://labs.google/fx/api/og-video/shared/966a806e-8af1-4aed-944e-79606693e083'
+
 export default function LoginPage() {
   const supabase = createClient()
   const router = useRouter()
@@ -133,15 +135,12 @@ export default function LoginPage() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale contrast-125"
         >
-          <source src="/assets/bgvideo-pingpong.mp4" type="video/mp4" />
+          <source src={BACKGROUND_VIDEO_SRC} type="video/mp4" />
         </video>
         {/* Color overlay matching landing page tinting */}
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>
 
-      {/* 1. Cyber Tech Blueprint Grid */}
-      <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-      
       {/* 2. Kinetic Orange Shifting Auras */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/12 blur-[120px] pointer-events-none z-0 animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/8 blur-[130px] pointer-events-none z-0" />
@@ -154,11 +153,8 @@ export default function LoginPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-lg mx-auto bg-black/90 border-2 border-white/10 rounded-[2.5rem] p-8 sm:p-12 z-10 shadow-[16px_16px_0px_#FF4D00] relative backdrop-blur-3xl flex flex-col items-center justify-center text-center gap-8 min-h-[500px]"
+            className="w-full max-w-md mx-auto bg-black/90 border-2 border-white/10 rounded-[2rem] p-6 sm:p-9 z-10 shadow-[10px_10px_0px_#FF4D00] relative backdrop-blur-3xl flex flex-col items-center justify-center text-center gap-6 min-h-[420px]"
           >
-            {/* Blueprint Grid inside card */}
-            <div className="absolute inset-0 skillswap-grid-bg skillswap-grid-bg-sm pointer-events-none z-0 rounded-[2.5rem]" />
-            
             <div className="relative z-10 space-y-6 flex flex-col items-center w-full">
               {/* Concentric Brand Logo */}
               <div className="w-14 h-14 rounded-xl bg-[#FF4D00] border-2 border-black flex items-center justify-center shadow-lg relative group shadow-[4px_4px_0px_#FFFFFF]">
@@ -207,10 +203,10 @@ export default function LoginPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-black/80 border border-white/10 rounded-[2.5rem] p-4 sm:p-6 lg:p-8 z-10 shadow-[16px_16px_0px_#FF4D00] relative backdrop-blur-3xl"
+            className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 bg-black/80 border border-white/10 rounded-[2rem] p-3 sm:p-5 lg:p-6 z-10 shadow-[10px_10px_0px_#FF4D00] relative backdrop-blur-3xl"
           >
             {/* LEFT COLUMN: Sidebar Active CardSwap Showcase */}
-            <div className="lg:col-span-5 relative overflow-hidden rounded-[2rem] bg-gradient-to-tr from-[#1C0902] via-[#080402] to-black p-8 border border-white/10 flex flex-col justify-between min-h-[550px] lg:min-h-[640px] group">
+            <div className="lg:col-span-5 relative overflow-hidden rounded-[1.5rem] bg-gradient-to-tr from-[#1C0902] via-[#080402] to-black p-6 border border-white/10 flex flex-col justify-between min-h-[440px] lg:min-h-[520px] group">
               {/* Giant Ping Pong Volley Watermark */}
               <div className="absolute inset-0 pointer-events-none opacity-[0.03] font-display font-black text-[9rem] leading-none uppercase select-none text-transparent stroke-white stroke-2 flex flex-col justify-between py-12">
                 <span className="-translate-x-4 tracking-tighter">PING</span>
@@ -236,7 +232,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Premium Interactive Live Preview */}
-                <div className="flex-1 flex items-center justify-center py-6 scale-90 sm:scale-95 lg:scale-100">
+                <div className="flex-1 flex items-center justify-center py-4 scale-80 sm:scale-85 lg:scale-90">
                   <CardSwap 
                     delay={4200}
                     cardDistance={20}
@@ -272,13 +268,13 @@ export default function LoginPage() {
             </div>
 
             {/* RIGHT COLUMN: Login Form Panel */}
-            <div className="lg:col-span-7 flex flex-col justify-center px-2 py-4 sm:p-6 lg:p-8 relative z-10">
+            <div className="lg:col-span-7 flex flex-col justify-center px-2 py-3 sm:p-5 lg:p-6 relative z-10">
               
               <motion.div 
                 initial="hidden"
                 animate="visible"
                 variants={CONTAINER_STAGGER}
-                className="w-full max-w-lg mx-auto space-y-8"
+                className="w-full max-w-md mx-auto space-y-6"
               >
                 
                 {/* Header Titles */}
@@ -286,7 +282,7 @@ export default function LoginPage() {
                   <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
                     PONG | SECURE AUTHENTICATION
                   </div>
-                  <h1 className="font-display font-black text-white text-[2.6rem] tracking-tight uppercase leading-none">
+                  <h1 className="font-display font-black text-white text-[2.2rem] tracking-tight uppercase leading-none">
                     <SplitText
                       text="Log In"
                       className="text-white inline-block"
