@@ -176,8 +176,8 @@ export default function ReviewPage() {
       <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
 
       {/* Background Glows */}
-      <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
+      <div className="absolute top-0 right-0 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
 
       {/* Main Responsive Split Panel */}
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 bg-black border-2 border-white/10 rounded-[2.5rem] p-4 sm:p-6 lg:p-8 backdrop-blur-2xl z-10 shadow-[8px_8px_0px_rgba(255,77,0,0.12)] hover:shadow-[8px_8px_0px_#FF4D00] transition-shadow duration-300 relative">
@@ -346,7 +346,7 @@ export default function ReviewPage() {
               </div>
 
               {/* Submit / Cancel Buttons */}
-              <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                 
                 {/* Cancel Button */}
                 <button

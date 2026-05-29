@@ -153,8 +153,8 @@ export default function SignUpPage() {
       </div>
 
       {/* 2. Kinetic Orange Shifting Auras */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/12 blur-[120px] pointer-events-none z-0 animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/8 blur-[130px] pointer-events-none z-0" />
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/12 blur-[120px] pointer-events-none z-0 animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/8 blur-[130px] pointer-events-none z-0" />
 
       <AnimatePresence mode="wait">
         {isRedirecting ? (
@@ -334,7 +334,7 @@ export default function SignUpPage() {
                   </AnimatePresence>
 
                   {/* Side-by-side First & Last Names */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="firstName" className="block text-[10px] font-mono font-bold uppercase tracking-widest text-white/50 mb-1">
                         First Name

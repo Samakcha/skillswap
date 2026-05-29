@@ -284,7 +284,7 @@ export default function MyPostsPage() {
         >
           {/* 1. Cyber Tech Blueprint Grid Overlay */}
           <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
           
           <div className="relative z-10 flex flex-col items-center gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#FF4D00] flex items-center justify-center shadow-lg border-2 border-black shadow-[4px_4px_0px_#FFFFFF]">
@@ -339,11 +339,11 @@ export default function MyPostsPage() {
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-10 relative">
         {/* BACKGROUND GLOWS */}
-        <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
+        <div className="absolute top-0 right-0 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
 
         {/* INNER CONTENT CONTAINER */}
-        <main className="max-w-7xl mx-auto w-full px-6 pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
+        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
           
           {/* HERO PANEL */}
           <motion.div 
@@ -735,7 +735,7 @@ export default function MyPostsPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={() => setShowCompletionModal(false)}
                   className="py-3.5 px-4 bg-black hover:bg-[#161618] text-white/50 hover:text-white border-2 border-white/10 hover:border-white/20 font-mono font-bold text-[11px] uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center shadow-[2px_2px_0px_rgba(255,255,255,0.05)] hover:shadow-none"

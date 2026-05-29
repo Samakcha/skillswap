@@ -154,7 +154,7 @@ export default function CreatePostPage() {
           className="min-h-screen bg-theme-bg text-gray-100 flex flex-col justify-center items-center font-sans relative overflow-hidden w-full"
         >
           <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
           
           <div className="relative z-10 flex flex-col items-center gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#FF4D00] flex items-center justify-center shadow-lg border-2 border-black shadow-[4px_4px_0px_#FFFFFF]">
@@ -214,11 +214,11 @@ export default function CreatePostPage() {
         {/* MAIN CONTAINER */}
         <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-10 relative animate-fadeIn">
           {/* BACKGROUND GLOWS */}
-          <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
+          <div className="absolute top-0 right-0 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
 
           {/* INNER CONTENT CONTAINER */}
-          <main className="max-w-7xl mx-auto w-full px-6 pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
+          <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
             
             {/* Split Panel */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 bg-black border-2 border-white/10 rounded-[2.5rem] p-4 sm:p-6 lg:p-8 backdrop-blur-2xl z-10 shadow-[8px_8px_0px_rgba(255,77,0,0.12)] hover:shadow-[8px_8px_0px_#FF4D00] transition-shadow duration-300 relative">
@@ -373,7 +373,7 @@ export default function CreatePostPage() {
                       <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-white/40">
                         I want to...
                       </label>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         
                         {/* Toggle Offer */}
                         <button
@@ -464,7 +464,7 @@ export default function CreatePostPage() {
                     </div>
 
                     {/* Action Buttons Row */}
-                    <div className="grid grid-cols-2 gap-4 pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                       
                       {/* Cancel Button */}
                       <button

@@ -239,7 +239,7 @@ export default function Home() {
 
       {/* 2.5 CARD SWAP LIVE PREVIEW SECTION */}
       <section className="py-24 px-6 bg-[#FF4D00] text-black w-full border-t-2 border-black z-10 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           
           {/* Left Text Column with Viewport Reveal */}
           <motion.div 
@@ -472,9 +472,9 @@ export default function Home() {
       {/* 6. INTERACTIVE DEMO SIMULATOR SECTION WITH VIEWPANEL ANIMATIONS */}
       <section id="demo" className="py-32 px-6 bg-black text-white border-t border-b-2 border-black relative overflow-hidden">
         {/* Glow backing */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none animate-pulse" />
         
-        <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           
           {/* Left information column with Viewport Slidings */}
           <motion.div 
@@ -721,7 +721,7 @@ export default function Home() {
           >
             <a 
               href="/auth/signup"
-              className="inline-flex items-center gap-3 bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-sm tracking-wider px-10 py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#FFFFFF] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-3 bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#FFFFFF] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-auto justify-center"
             >
               <span>CREATE FREE ACCOUNT</span>
               <ArrowUpRight className="w-5 h-5 stroke-[2.5px]" />
@@ -729,7 +729,7 @@ export default function Home() {
 
             <a 
               href="/demo"
-              className="inline-flex items-center gap-3 bg-white hover:bg-black text-black hover:text-white font-mono font-bold text-sm tracking-wider px-10 py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-3 bg-white hover:bg-black text-black hover:text-white font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-auto justify-center"
             >
               <span>VIEW DEMO</span>
               <ArrowUpRight className="w-5 h-5 stroke-[2.5px]" />

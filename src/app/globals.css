@@ -28,12 +28,51 @@
   scroll-behavior: smooth;
 }
 
+html {
+  width: 100%;
+  overflow-x: clip;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  overflow-x: hidden;
+  width: 100%;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  min-width: 0;
+}
+
+.break-mobile {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  body {
+    min-width: 0;
+  }
+
+  .skillswap-grid-bg {
+    background-size: 28px 28px;
+  }
+
+  .skillswap-grid-bg-sm {
+    background-size: 18px 18px;
+  }
 }
 
 html,

@@ -249,8 +249,8 @@ export default function ProfileSetupPage() {
       <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
       
       {/* 2. Kinetic Orange Shifting Auras */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/12 blur-[120px] pointer-events-none z-0 animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/8 blur-[130px] pointer-events-none z-0" />
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/12 blur-[120px] pointer-events-none z-0 animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/8 blur-[130px] pointer-events-none z-0" />
 
       {/* Main Responsive Split Panel */}
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-black/80 border border-white/10 rounded-[2.5rem] p-4 sm:p-6 lg:p-8 z-10 shadow-[16px_16px_0px_#FF4D00] relative backdrop-blur-3xl">

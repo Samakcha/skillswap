@@ -345,8 +345,8 @@ export default function DemoPage() {
 
       {/* Blueprint Grid Overlay */}
       <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-      <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
+      <div className="absolute top-0 right-0 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
 
       {/* FLOATING ACTION TOASTS */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
@@ -400,7 +400,7 @@ export default function DemoPage() {
             className="fixed inset-0 z-[100] bg-theme-bg flex flex-col justify-center items-center font-sans overflow-hidden w-full h-full"
           >
             <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
             
             <div className="relative z-10 flex flex-col items-center gap-6">
               <div className="w-14 h-14 rounded-xl bg-[#FF4D00] flex items-center justify-center shadow-lg border-2 border-black shadow-[4px_4px_0px_#FFFFFF]">
@@ -808,7 +808,7 @@ export default function DemoPage() {
 
       {/* 4. MAIN WORKSPACE / INNER CONTENTS PANEL */}
       <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-10 relative">
-        <main className="max-w-7xl mx-auto w-full px-6 pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
+        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
           
           {/* TAB ROUTING SWAPPERS PANEL */}
           {activeSidebarTab === 'dashboard' && (
@@ -1475,7 +1475,7 @@ export default function DemoPage() {
               </div>
 
               <form onSubmit={handleSimulateNewProposal} className="space-y-4 font-mono text-xs">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] text-white/50 uppercase font-black">Proposal Title</label>
                     <input name="title" required placeholder="e.g. Italian Pasta Dough lessons" className="w-full px-4 py-3 bg-[#09090b] border border-white/10 rounded-xl focus:border-[#FF4D00] focus:outline-none" />

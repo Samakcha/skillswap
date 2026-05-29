@@ -302,7 +302,7 @@ export default function MessagesPage() {
         >
           {/* 1. Cyber Tech Blueprint Grid Overlay */}
           <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
           
           <div className="relative z-10 flex flex-col items-center gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#FF4D00] flex items-center justify-center shadow-lg border-2 border-black shadow-[4px_4px_0px_#FFFFFF]">
@@ -357,11 +357,11 @@ export default function MessagesPage() {
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-10 relative">
         {/* BACKGROUND GLOWS */}
-        <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
+        <div className="absolute top-0 right-0 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
 
         {/* MESSAGES INNER BODY */}
-        <main className="max-w-4xl mx-auto w-full px-6 pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
+        <main className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
         
         {/* HEADER PANEL */}
         <motion.div 

@@ -192,7 +192,7 @@ export default function UserReviewsPage() {
         >
           {/* Cyber Tech Blueprint Grid */}
           <div className="absolute inset-0 skillswap-grid-bg pointer-events-none z-0" />
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
           
           <div className="relative z-10 flex flex-col items-center gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#FF4D00] flex items-center justify-center shadow-lg border-2 border-black shadow-[4px_4px_0px_#FFFFFF]">
@@ -247,11 +247,11 @@ export default function UserReviewsPage() {
           {/* MAIN CONTAINER */}
           <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-10 relative">
             {/* BACKGROUND GLOWS */}
-            <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
+            <div className="absolute top-0 right-0 w-[550px] h-[550px] max-w-[80vw] max-h-[80vw] rounded-full bg-[#FF4D00]/10 blur-[130px] pointer-events-none z-0 animate-pulse" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] max-w-[85vw] max-h-[85vw] rounded-full bg-[#FF4D00]/5 blur-[140px] pointer-events-none z-0" />
 
             {/* DASHBOARD INNER BODY */}
-            <main className="max-w-7xl mx-auto w-full px-6 pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
+            <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 lg:pt-10 relative z-10 flex flex-col gap-8">
               
               {/* HERO GREETING PANEL */}
               <motion.div 
@@ -294,7 +294,7 @@ export default function UserReviewsPage() {
                   </div>
 
                   {/* Right Col: Stats breakdown */}
-                  <div className="lg:col-span-5 grid grid-cols-3 gap-3 w-full self-stretch lg:self-auto">
+                  <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full self-stretch lg:self-auto">
                     
                     {/* Average Stars */}
                     <div className="bg-[#09090b] border-2 border-white/5 hover:border-[#FF4D00]/30 transition-colors duration-300 rounded-2xl p-4 text-center shadow-md flex flex-col justify-between">

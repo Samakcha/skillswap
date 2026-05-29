@@ -343,7 +343,7 @@ export default function CardSwap({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full max-w-[420px] h-[360px] flex items-center justify-center cursor-grab select-none active:cursor-grabbing"
+      className="relative w-full max-w-[420px] h-[300px] sm:h-[340px] md:h-[360px] flex items-center justify-center cursor-grab select-none active:cursor-grabbing overflow-visible"
       onMouseEnter={() => { 
         isHoveredRef.current = true
         setShowDragHint(true)
@@ -399,7 +399,7 @@ export default function CardSwap({
             ref={(el) => { cardsRef.current[idx] = el }}
             onMouseDown={(e) => handleDragStart(e, idx)}
             onTouchStart={(e) => handleDragStart(e, idx)}
-            className={`absolute w-[320px] sm:w-[360px] bg-[#FFFCF9] border-2 border-black p-6 shadow-[6px_6px_0px_#000000] rounded-2xl flex flex-col justify-between h-[270px] select-none ${
+            className={`absolute w-[min(82vw,320px)] sm:w-[360px] bg-[#FFFCF9] border-2 border-black p-4 sm:p-6 shadow-[6px_6px_0px_#000000] rounded-2xl flex flex-col justify-between h-[240px] sm:h-[270px] select-none ${
               isTop ? 'z-40 hover:shadow-[10px_10px_0px_#000000] transition-shadow duration-300' : ''
             }`}
           >
