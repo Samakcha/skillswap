@@ -26,7 +26,7 @@ const CONTAINER_STAGGER = {
   }
 }
 
-const BACKGROUND_VIDEO_SRC = 'https://labs.google/fx/api/og-video/shared/966a806e-8af1-4aed-944e-79606693e083'
+const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&background=1&muted=1&transparent=1&dnt=1'
 
 export default function LoginPage() {
   const supabase = createClient()
@@ -41,8 +41,8 @@ export default function LoginPage() {
   const [signupSuccess, setSignupSuccess] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [redirectMessage, setRedirectMessage] = useState('Connecting handshake...')
-
-  // Safe client-side check for signup success URL parameters
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -52,29 +52,32 @@ export default function LoginPage() {
     }
   }, [])
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  // Seamless autoPlay recovery effect to ensure background video starts playing
-  // even under strict mobile/desktop battery-saver or autoplay block policies.
   useEffect(() => {
-    const video = videoRef.current
-    if (video) {
-      const startVideo = () => {
-        video.play().catch(() => {})
-      }
-      
-      video.play().catch(() => {
-        // Fallback for strict browser policies: listen to first user interaction to start playing
-        window.addEventListener('click', startVideo, { once: true })
-        window.addEventListener('touchstart', startVideo, { once: true })
-      })
-
-      return () => {
-        window.removeEventListener('click', startVideo)
-        window.removeEventListener('touchstart', startVideo)
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.origin.includes('vimeo.com')) return
+      try {
+        const data = JSON.parse(event.data)
+        if (data.event === 'play' || data.event === 'playing') {
+          setIsVideoLoaded(true)
+        }
+      } catch (e) {
+        // Safe to ignore non-JSON messages
       }
     }
+    
+    window.addEventListener('message', handleMessage)
+    
+    // Fallback safety timeout (2 seconds)
+    const fallbackTimer = setTimeout(() => {
+      setIsVideoLoaded(true)
+    }, 2000)
+    
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(fallbackTimer)
+    }
   }, [])
+
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -119,16 +122,15 @@ export default function LoginPage() {
       
       {/* 0. Full-width Immersive Background Video with Autoplay Recovery & 10s Rewind */}
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none select-none">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale contrast-125"
-        >
-          <source src={BACKGROUND_VIDEO_SRC} type="video/mp4" />
-        </video>
+        <iframe
+          src={BACKGROUND_VIDEO_SRC}
+          onLoad={() => setIsVideoLoaded(true)}
+          className={`absolute inset-0 w-full h-full grayscale contrast-125 pointer-events-none scale-110 transition-opacity duration-1000 ${
+            isVideoLoaded ? 'opacity-15' : 'opacity-0'
+          }`}
+          frameBorder="0"
+          allow="autoplay; fullscreen"
+        />
         {/* Color overlay matching landing page tinting */}
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>
@@ -248,6 +250,7 @@ export default function LoginPage() {
                   <div>
                     <Link 
                       href="/" 
+                      prefetch={true}
                       className="inline-flex items-center gap-2 text-[10px] font-mono font-bold text-[#FF4D00] hover:text-white transition-colors duration-200 uppercase tracking-widest group"
                     >
                       <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />

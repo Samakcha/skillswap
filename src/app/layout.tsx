@@ -15,13 +15,14 @@ export default function RootLayout({
     <html
       lang="en"
       className="h-full antialiased"
+      suppressHydrationWarning
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-        <link rel="preconnect" href="https://labs.google" />
-        <link rel="preload" href="https://labs.google/fx/api/og-video/shared/966a806e-8af1-4aed-944e-79606693e083" as="video" type="video/mp4" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://player.vimeo.com" />
+        <link rel="preconnect" href="https://f.vimeocdn.com" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

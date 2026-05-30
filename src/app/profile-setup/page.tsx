@@ -8,6 +8,8 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, AlertCircle, ArrowLeft, Camera, Layers } from 'lucide-react'
 
+const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&background=1&muted=1&transparent=1&dnt=1&api=1'
+
 // Framer Motion Animation Presets
 const FADE_UP = {
   hidden: { opacity: 0, y: 15 },
@@ -46,29 +48,36 @@ export default function ProfileSetupPage() {
   
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  // Background video playback lifecycle (Autoplay recovery & 10s Rewind)
   useEffect(() => {
-    const video = videoRef.current
-    if (video) {
-      const startVideo = () => {
-        video.play().catch(() => {})
-      }
-      
-      video.play().catch(() => {
-        // Fallback for strict browser policies: listen to first user interaction to start playing
-        window.addEventListener('click', startVideo, { once: true })
-        window.addEventListener('touchstart', startVideo, { once: true })
-      })
-
-      return () => {
-        window.removeEventListener('click', startVideo)
-        window.removeEventListener('touchstart', startVideo)
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.origin.includes('vimeo.com')) return
+      try {
+        const data = JSON.parse(event.data)
+        if (data.event === 'play' || data.event === 'playing') {
+          setIsVideoLoaded(true)
+        }
+      } catch (e) {
+        // Safe to ignore non-JSON messages
       }
     }
+    
+    window.addEventListener('message', handleMessage)
+    
+    // Fallback safety timeout (2 seconds)
+    const fallbackTimer = setTimeout(() => {
+      setIsVideoLoaded(true)
+    }, 2000)
+    
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(fallbackTimer)
+    }
   }, [])
+
+
+
 
   // Safe client-side fetch of Supabase metadata on mount
   useEffect(() => {
@@ -222,16 +231,16 @@ export default function ProfileSetupPage() {
       
       {/* 0. Full-width Immersive Background Video with Autoplay Recovery & 10s Rewind */}
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none select-none">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-15 grayscale contrast-125"
-        >
-          <source src="/assets/bgvideo-pingpong.mp4" type="video/mp4" />
-        </video>
+        <iframe
+          src={BACKGROUND_VIDEO_SRC}
+          onLoad={() => setIsVideoLoaded(true)}
+          className={`absolute inset-0 w-full h-full grayscale contrast-125 pointer-events-none scale-110 transition-opacity duration-1000 ${
+            isVideoLoaded ? 'opacity-15' : 'opacity-0'
+          }`}
+          frameBorder="0"
+          allow="autoplay; fullscreen"
+        />
+
         {/* Color overlay matching landing page tinting */}
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>
@@ -331,6 +340,7 @@ export default function ProfileSetupPage() {
             <div>
               <Link 
                 href="/" 
+                prefetch={true}
                 className="inline-flex items-center gap-2 text-[10px] font-mono font-bold text-[#FF4D00] hover:text-white transition-colors duration-200 uppercase tracking-widest group"
               >
                 <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />

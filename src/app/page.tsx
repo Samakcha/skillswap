@@ -18,38 +18,14 @@ const SERVICES = [
   { index: "05", title: "WELLNESS & BODY", tags: ["VINYASA YOGA", "MINDFULNESS MEDITATION", "NUTRITION", "PILATES"] }
 ]
 
-const BACKGROUND_VIDEO_SRC = 'https://labs.google/fx/api/og-video/shared/966a806e-8af1-4aed-944e-79606693e083'
+const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&background=1&muted=1&transparent=1&dnt=1&api=1'
 
 export default function Home() {
   const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "table_missing" | "error">("checking")
   const [dbMessage, setDbMessage] = useState("")
   
   const [highlightServices, setHighlightServices] = useState(false);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Seamless autoPlay recovery effect to ensure background video starts playing
-  // even under strict mobile/desktop battery-saver or autoplay block policies.
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      const startVideo = () => {
-        video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
-      };
-      
-      video.play().then(() => setIsVideoPlaying(true)).catch(() => {
-        // Fallback for strict browser policies: listen to first user interaction to start playing
-        window.addEventListener('click', startVideo, { once: true });
-        window.addEventListener('touchstart', startVideo, { once: true });
-      });
-
-      return () => {
-        window.removeEventListener('click', startVideo);
-        window.removeEventListener('touchstart', startVideo);
-      };
-    }
-  }, []);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   // Smooth scroll springs to avoid raw scroll reading jitters
   const { scrollY, scrollYProgress } = useScroll();
@@ -140,6 +116,32 @@ export default function Home() {
     checkDatabase()
   }, [])
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.origin.includes('vimeo.com')) return
+      try {
+        const data = JSON.parse(event.data)
+        if (data.event === 'play' || data.event === 'playing') {
+          setIsVideoLoaded(true)
+        }
+      } catch (e) {
+        // Safe to ignore non-JSON messages
+      }
+    }
+    
+    window.addEventListener('message', handleMessage)
+    
+    // Fallback safety timeout (2 seconds)
+    const fallbackTimer = setTimeout(() => {
+      setIsVideoLoaded(true)
+    }, 2000)
+    
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(fallbackTimer)
+    }
+  }, [])
+
   return (
     <div className="landing-page-root min-h-screen bg-[#FF4D00] text-black flex flex-col font-sans selection:bg-black selection:text-[#FF4D00] relative overflow-x-hidden">
       
@@ -195,19 +197,14 @@ export default function Home() {
           className="absolute inset-0 overflow-hidden z-0 pointer-events-none"
           style={{ y: videoY }}
         >
-          <video
-            ref={videoRef}
+          <iframe
             src={BACKGROUND_VIDEO_SRC}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            onPlaying={() => setIsVideoPlaying(true)}
-            onCanPlay={() => setIsVideoPlaying(true)}
-            className={`absolute inset-0 w-full h-full object-cover grayscale contrast-125 transition-opacity duration-1000 ${
-              isVideoPlaying ? 'opacity-25' : 'opacity-0'
+            onLoad={() => setIsVideoLoaded(true)}
+            className={`absolute inset-0 w-full h-full grayscale contrast-125 pointer-events-none scale-110 transition-opacity duration-1000 ${
+              isVideoLoaded ? 'opacity-25' : 'opacity-0'
             }`}
+            frameBorder="0"
+            allow="autoplay; fullscreen"
           />
           <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color pointer-events-none" />
         </motion.div>
