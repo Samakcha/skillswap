@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, AlertCircle, ArrowLeft, UserPlus, MapPin, Users, Layers, ArrowRight, ShieldCheck } from 'lucide-react'
 
-const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&background=1&muted=1&transparent=1&dnt=1&api=1'
+const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&muted=1&playsinline=1&controls=0&badge=0&byline=0&portrait=0&title=0&transparent=1&dnt=1&api=1'
 
 // Framer Motion Animation Presets
 const FADE_UP = {
@@ -170,8 +170,9 @@ export default function JoinNeighborhoodPage() {
           }`}
 
           frameBorder="0"
-          allow="autoplay; fullscreen"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
         />
+
 
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>
