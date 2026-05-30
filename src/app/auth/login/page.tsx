@@ -215,7 +215,7 @@ export default function LoginPage() {
               <div className="relative z-10 flex flex-col h-full justify-between">
                 {/* Concentric Brand Logo */}
                 <div className="flex items-center justify-between">
-                  <Link href="/" className="inline-flex items-center gap-3 group/logo select-none">
+                  <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group/logo select-none">
                     <span className="font-display font-bold text-2xl tracking-tighter uppercase text-white group-hover/logo:text-[#FF4D00] transition-colors duration-300">
                       SKILLSWAP
                     </span>

@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react"
 import { motion, useScroll, useTransform, useSpring } from "framer-motion"
 import { createClient } from "@/lib/supabase"
+import Link from "next/link"
+
 import { ArrowDown, ArrowUpRight, Database, CheckCircle2, AlertCircle, Sparkles, Layers } from "lucide-react"
 import InteractiveSimulator from "@/components/InteractiveSimulator"
 import CardSwap from "@/components/CardSwap"
@@ -178,13 +180,15 @@ export default function Home() {
 
           {/* Social / Action button */}
           <div className="flex items-center gap-4">
-            <a 
+            <Link 
               href="/auth/signup"
+              prefetch={true}
               className="bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-[11px] px-6 py-3 rounded-full border-2 border-black transition-all duration-200 tracking-wider uppercase hover:scale-105"
             >
               JOIN SWAP
-            </a>
+            </Link>
           </div>
+
 
         </div>
       </header>
@@ -249,13 +253,15 @@ export default function Home() {
             </p>
             
             <div className="pt-4 flex justify-center lg:justify-start">
-              <a 
+              <Link 
                 href="/dashboard"
+                prefetch={true}
                 className="bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-[11px] px-8 py-3.5 rounded-full border-2 border-black transition-all duration-200 tracking-wider uppercase hover:scale-105 active:scale-95 shadow-[4px_4px_0px_#FFFFFF] hover:shadow-none"
               >
                 Browse your neighborhood
-              </a>
+              </Link>
             </div>
+
           </motion.div>
 
           {/* Right Stack CardSwap Column with Viewport Zoom & Sideways Parallax */}
@@ -707,22 +713,25 @@ export default function Home() {
             transition={{ type: "spring", stiffness: 70, damping: 12, delay: 0.25 }}
             className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a 
+            <Link 
               href="/auth/signup"
+              prefetch={true}
               className="inline-flex items-center gap-3 bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#FFFFFF] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-64 justify-center"
             >
               <span>CREATE FREE ACCOUNT</span>
               <ArrowUpRight className="w-5 h-5 stroke-[2.5px]" />
-            </a>
+            </Link>
 
-            <a 
+            <Link 
               href="/demo"
+              prefetch={true}
               className="inline-flex items-center gap-3 bg-white hover:bg-black text-black hover:text-white font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-64 justify-center"
             >
               <span>VIEW DEMO</span>
               <ArrowUpRight className="w-5 h-5 stroke-[2.5px]" />
-            </a>
+            </Link>
           </motion.div>
+
 
         </div>
       </section>

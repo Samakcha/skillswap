@@ -193,7 +193,7 @@ export default function JoinNeighborhoodPage() {
           <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full bg-[#FF4D00]/5 blur-[80px] pointer-events-none" />
 
           <div className="relative z-10 flex items-center justify-between">
-            <Link href="/" className="font-display font-black text-2xl tracking-tighter uppercase text-white hover:text-[#FF4D00] transition-colors">
+            <Link href="/" prefetch={true} className="font-display font-black text-2xl tracking-tighter uppercase text-white hover:text-[#FF4D00] transition-colors">
               SKILL<span className="text-[#FF4D00]">SWAP</span>
             </Link>
             <div className="px-3 py-1 border border-[#FF4D00]/25 rounded-full font-mono text-[8px] font-black uppercase tracking-widest text-[#FF4D00] bg-[#FF4D00]/5">
