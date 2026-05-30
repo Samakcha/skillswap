@@ -263,7 +263,7 @@ export default function UserReviewsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
                   
                   {/* Left Col: Titles */}
-                  <div className="lg:col-span-7 space-y-4.5">
+                  <div className="lg:col-span-8 space-y-4.5">
                     <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
                       <Sparkles className="w-3 h-3 text-[#FF4D00] animate-pulse" />
                       <span>Verified Reputational Ledger</span>
@@ -294,7 +294,7 @@ export default function UserReviewsPage() {
                   </div>
 
                   {/* Right Col: Stats breakdown */}
-                  <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full self-stretch lg:self-auto">
+                  <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full self-stretch lg:self-auto">
                     
                     {/* Average Stars */}
                     <div className="bg-[#09090b] border-2 border-white/5 hover:border-[#FF4D00]/30 transition-colors duration-300 rounded-2xl p-4 text-center shadow-md flex flex-col justify-between">
@@ -318,18 +318,6 @@ export default function UserReviewsPage() {
                         </strong>
                       </div>
                       <span className="block text-[8px] font-mono text-white/20 uppercase tracking-wider">Feedback items</span>
-                    </div>
-
-                    {/* 5-Star Ratio */}
-                    <div className="bg-[#09090b] border-2 border-white/5 hover:border-[#FF4D00]/30 transition-colors duration-300 rounded-2xl p-4 text-center shadow-md flex flex-col justify-between">
-                      <span className="block text-[8px] font-mono font-bold text-white/40 tracking-wider uppercase">Exceptional</span>
-                      <div className="flex items-center gap-1 justify-center py-2.5">
-                        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <strong className="text-xl font-display font-black text-emerald-400 leading-none">
-                          {fiveStarCount}
-                        </strong>
-                      </div>
-                      <span className="block text-[8px] font-mono text-white/20 uppercase tracking-wider">5-Star Swaps</span>
                     </div>
 
                   </div>

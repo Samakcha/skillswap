@@ -28,7 +28,8 @@ import {
   Flag,
   Loader2,
   Award,
-  X
+  X,
+  Heart
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
@@ -113,6 +114,24 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
+
+  // Helper to fetch likes for a list of posts
+  async function fetchLikesForPostsList(postsList: any[], currentUserId: string | null) {
+    return Promise.all(
+      postsList.map(async (post) => {
+        const { data: likes } = await (supabase
+          .from('likes') as any)
+          .select('*')
+          .eq('post_id', post.id)
+        
+        return {
+          ...post,
+          like_count: likes ? likes.length : 0,
+          has_liked: likes && currentUserId ? likes.some((l: any) => l.user_id === currentUserId) : false
+        }
+      })
+    )
+  }
   
   // State for interactive features
   const [searchQuery, setSearchQuery] = useState('')
@@ -375,6 +394,15 @@ export default function DashboardPage() {
         }
       }
 
+      // Fast session retrieval for likes enrichment during cache load
+      let currentUserId: string | null = null
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        currentUserId = session?.user?.id || null
+      } catch (err) {
+        console.error('Error fetching session for cache load:', err)
+      }
+
       // 2. If cached profile exists, instantly start loading posts in parallel with auth check
       let postsPromise: Promise<any> | null = null
       if (cachedProfile?.pin_code) {
@@ -387,10 +415,11 @@ export default function DashboardPage() {
         postsPromise = promise
           
         // Run posts retrieval in parallel
-        promise.then(({ data }: any) => {
+        promise.then(async ({ data }: any) => {
           if (data) {
             const filtered = data.filter((post: any) => post.profiles?.pin_code === cachedProfile.pin_code)
-            setPosts(filtered)
+            const enriched = await fetchLikesForPostsList(filtered, currentUserId)
+            setPosts(enriched)
             setLoading(false) // Ends the loader immediately!
           }
         }).catch((err: any) => console.error('Error fetching cached posts:', err))
@@ -447,7 +476,9 @@ export default function DashboardPage() {
             
           const filtered = (freshPosts || []).filter((post: any) => post.profiles?.pin_code === freshProfile.pin_code)
           const nonBlocked = filtered.filter((post: any) => !blockedUserIds.has(post.user_id))
-          setPosts(nonBlocked)
+          
+          const enriched = await fetchLikesForPostsList(nonBlocked, user.id)
+          setPosts(enriched)
         } else {
           // If posts were already loaded from cache, filter out posts from blocked users
           setPosts(prev => prev.filter((post: any) => !blockedUserIds.has(post.user_id)))
@@ -487,6 +518,202 @@ export default function DashboardPage() {
         }
       }
     )
+  }
+
+  // Realtime subscription on likes table
+  useEffect(() => {
+    if (!user) return
+
+    const likesChannelName = `likes-updates-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+    const channel = supabase
+      .channel(likesChannelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes'
+        },
+        async (payload: any) => {
+          console.log('Realtime likes update:', payload)
+          
+          if (payload.eventType === 'INSERT') {
+            const newLike = payload.new
+            if (!newLike) return
+            
+            setPosts(prev => prev.map(p => {
+              if (p.id === newLike.post_id) {
+                const isMyLike = newLike.user_id === user.id
+                if (isMyLike) {
+                  if (!p.has_liked) {
+                    return {
+                      ...p,
+                      has_liked: true,
+                      like_count: (p.like_count || 0) + 1
+                    }
+                  }
+                } else {
+                  return {
+                    ...p,
+                    like_count: (p.like_count || 0) + 1
+                  }
+                }
+              }
+              return p
+            }))
+          } else if (payload.eventType === 'DELETE') {
+            const oldLike = payload.old
+            if (!oldLike) return
+            
+            const postId = oldLike.post_id
+            const userId = oldLike.user_id
+            
+            if (postId) {
+              setPosts(prev => prev.map(p => {
+                if (p.id === postId) {
+                  const isMyLike = userId === user.id
+                  if (isMyLike) {
+                    if (p.has_liked) {
+                      return {
+                        ...p,
+                        has_liked: false,
+                        like_count: Math.max(0, (p.like_count || 0) - 1)
+                      }
+                    }
+                  } else {
+                    return {
+                      ...p,
+                      like_count: Math.max(0, (p.like_count || 0) - 1)
+                    }
+                  }
+                }
+                return p
+              }))
+            } else {
+              // Fallback if REPLICA IDENTITY is DEFAULT
+              const { data: allLikes } = await (supabase
+                .from('likes') as any)
+                .select('*')
+              
+              if (allLikes) {
+                setPosts(prev => prev.map(p => {
+                  const postLikes = allLikes.filter((l: any) => l.post_id === p.id)
+                  return {
+                    ...p,
+                    like_count: postLikes.length,
+                    has_liked: postLikes.some((l: any) => l.user_id === user.id)
+                  }
+                }))
+              }
+            }
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+
+  // Handle toggling likes
+  async function handleLikeClick(e: React.MouseEvent, post: any) {
+    e.stopPropagation()
+    e.preventDefault()
+    
+    if (!user || !profile) {
+      showToast("You must be logged in to like posts.", "error")
+      return
+    }
+
+    const postId = post.id
+    const wasLiked = post.has_liked
+    const originalCount = post.like_count || 0
+
+    // Optimistic Update (instant UI feedback)
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          has_liked: !wasLiked,
+          like_count: wasLiked ? Math.max(0, originalCount - 1) : originalCount + 1
+        }
+      }
+      return p
+    }))
+
+    try {
+      if (wasLiked) {
+        // Unlike: delete row from likes table
+        const { error } = await (supabase
+          .from('likes') as any)
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id)
+
+        if (error) throw error
+        showToast("Post unliked.", "success")
+
+        // Insert unlike notification for post owner
+        if (post.user_id !== user.id) {
+          const { error: notifError } = await (supabase.from('notifications') as any).insert({
+            user_id: post.user_id, // post owner's id
+            type: 'unlike',
+            message: `${profile.full_name || 'Someone'} unliked your post`,
+            related_post_id: postId,
+            related_user_id: user.id,
+            is_read: false
+          })
+
+          if (notifError) {
+            console.error("Error inserting unlike notification:", notifError)
+          }
+        }
+      } else {
+        // Like: insert row into likes table
+        const { error } = await (supabase
+          .from('likes') as any)
+          .insert({
+            post_id: postId,
+            user_id: user.id
+          })
+
+        if (error) throw error
+        showToast("Post liked!", "success")
+
+        // Insert notification for post owner
+        if (post.user_id !== user.id) {
+          const { error: notifError } = await (supabase.from('notifications') as any).insert({
+            user_id: post.user_id, // post owner's id
+            type: 'like',
+            message: `${profile.full_name || 'Someone'} liked your post`,
+            related_post_id: postId,
+            related_user_id: user.id,
+            is_read: false
+          })
+
+          if (notifError) {
+            console.error("Error inserting notification:", notifError)
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Error toggling like:", err)
+      showToast("Failed to update like. Rolling back...", "error")
+      
+      // Rollback optimistic update
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            has_liked: wasLiked,
+            like_count: originalCount
+          }
+        }
+        return p
+      }))
+    }
   }
 
   // Find potential swapping partners and initiate completion flow
@@ -1068,10 +1295,24 @@ export default function DashboardPage() {
                             </span>
                           )}
 
-                          {/* Created date display */}
-                          <div className="flex items-center gap-1 text-[9px] font-mono text-black/40 uppercase tracking-wider font-bold">
-                            <Clock className="w-3.5 h-3.5 text-black/30" />
-                            <span>{formatDate(post.created_at)}</span>
+                          {/* Created date display & Like Button */}
+                          <div className="flex items-center gap-2 relative z-20">
+                            <div className="flex items-center gap-1 text-[9px] font-mono text-black/40 uppercase tracking-wider font-bold">
+                              <Clock className="w-3.5 h-3.5 text-black/30" />
+                              <span>{formatDate(post.created_at)}</span>
+                            </div>
+
+                            {!isOwnPost && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleLikeClick(e, post)}
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 border border-black rounded-full font-mono text-[9px] font-bold transition-all active:scale-90 cursor-pointer bg-white text-black hover:bg-black/5 shadow-[1px_1px_0px_#000000] hover:shadow-none hover:translate-x-[0.5px] hover:translate-y-[0.5px]"
+                                title={post.has_liked ? "Unlike post" : "Like post"}
+                              >
+                                <Heart className={`w-3 h-3 ${post.has_liked ? 'fill-[#FF4D00] text-[#FF4D00]' : 'text-black'}`} />
+                                <span>{post.like_count || 0}</span>
+                              </button>
+                            )}
                           </div>
 
                         </div>
@@ -1085,7 +1326,7 @@ export default function DashboardPage() {
                           </h3>
 
                           {/* Target skill tag pill */}
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FF4D00]/10 border border-[#FF4D00]/20 text-[10px] font-mono font-black uppercase text-black tracking-wider">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FF4D00]/10 border border-[#FF4D00]/20 text-[10px] font-mono font-bold uppercase text-black tracking-wider">
                             <Tag className="w-3 h-3 text-black" />
                             <span>Skill: {post.skill}</span>
                           </div>
@@ -1135,7 +1376,7 @@ export default function DashboardPage() {
                                 type="button"
                                 disabled={modalLoading}
                                 onClick={() => handleMarkAsComplete(post.id)}
-                                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-black border border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer disabled:opacity-50"
+                                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-black border border-black font-mono font-bold text-[10px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer disabled:opacity-50"
                                 title="Mark Swap as Complete"
                               >
                                 <Check className="w-3.5 h-3.5 stroke-[2.5px]" />
@@ -1144,7 +1385,7 @@ export default function DashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDeletePost(post.id)}
-                                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-rose-400 hover:bg-rose-500 text-black border border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer"
+                                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-rose-400 hover:bg-rose-500 text-black border border-black font-mono font-bold text-[10px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer"
                                 title="Delete Proposal"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1158,7 +1399,7 @@ export default function DashboardPage() {
                               <button
                                 id={shouldHaveChatButtonId ? "onboarding-chat-button" : undefined}
                                 onClick={() => router.push(`/messages/${post.user_id}?post=${post.id}`)}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FF4D00] hover:bg-black hover:text-white text-black border border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer group/btn"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FF4D00] hover:bg-black hover:text-white text-black border border-black font-mono font-bold text-[10px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer group/btn"
                               >
                                 <span>Swap</span>
                                 <ArrowUpRight className="w-3.5 h-3.5 text-current group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all stroke-[2.5px]" />
@@ -1469,7 +1710,7 @@ export default function DashboardPage() {
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                    <span className="font-mono text-[9px] font-black uppercase text-[#FF4D00] tracking-widest">
+                    <span className="font-mono text-[9px] font-bold uppercase text-[#FF4D00] tracking-widest">
                       Step {currentStep + 1} of {getActiveSteps().length}
                     </span>
                     <button 
@@ -1511,7 +1752,7 @@ export default function DashboardPage() {
 
                     <button
                       onClick={handleOnboardingNext}
-                      className="px-4.5 py-2 bg-[#FF4D00] hover:bg-white text-black font-mono font-black text-[10px] uppercase tracking-widest rounded-xl transition-all border-2 border-black shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[1.5px] hover:translate-y-[1.5px] cursor-pointer"
+                      className="px-4.5 py-2 bg-[#FF4D00] hover:bg-white text-black font-mono font-bold text-[10px] uppercase tracking-widest rounded-xl transition-all border-2 border-black shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[1.5px] hover:translate-y-[1.5px] cursor-pointer"
                     >
                       {currentStep === getActiveSteps().length - 1 ? 'Finish' : 'Next'}
                     </button>
@@ -1541,7 +1782,7 @@ export default function DashboardPage() {
                   localStorage.removeItem('skillswap_onboarding_complete')
                 }
               }}
-              className="flex items-center gap-2 px-4.5 py-3.5 bg-black/80 hover:bg-[#FF4D00] text-white hover:text-black border-2 border-[#FF4D00] hover:border-black font-mono font-black text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md shadow-[0_0_30px_rgba(255,77,0,0.25)] hover:shadow-[0_0_15px_rgba(255,77,0,0.5)] transition-all duration-300 active:scale-95 cursor-pointer group"
+              className="flex items-center gap-2 px-4.5 py-3.5 bg-black/80 hover:bg-[#FF4D00] text-white hover:text-black border-2 border-[#FF4D00] hover:border-black font-mono font-bold text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md shadow-[0_0_30px_rgba(255,77,0,0.25)] hover:shadow-[0_0_15px_rgba(255,77,0,0.5)] transition-all duration-300 active:scale-95 cursor-pointer group"
               title="Restart Onboarding Tour"
             >
               <Award className="w-4.5 h-4.5 text-[#FF4D00] group-hover:text-black transition-colors shrink-0 stroke-[2.5px]" />

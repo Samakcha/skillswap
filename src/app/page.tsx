@@ -150,7 +150,7 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#FF4D00] text-black flex flex-col font-sans selection:bg-black selection:text-[#FF4D00] relative overflow-x-hidden">
+    <div className="landing-page-root min-h-screen bg-[#FF4D00] text-black flex flex-col font-sans selection:bg-black selection:text-[#FF4D00] relative overflow-x-hidden">
       
       {/* 1. FLOATING NAVIGATION BAR */}
       <header className="fixed top-6 left-0 w-full z-50 px-6">
@@ -158,7 +158,7 @@ export default function Home() {
           
           {/* Logo - Archivo Black */}
           <a href="#" className="flex items-center gap-2 group cursor-pointer">
-            <span className="font-display font-bold text-2xl tracking-tighter uppercase text-white">
+            <span className="font-display font-bold text-2xl tracking-tight uppercase text-white">
               SKILLSWAP
             </span>
           </a>
@@ -230,8 +230,8 @@ export default function Home() {
             pauseDuration={3000}
             showCursor={true}
             cursorCharacter="|"
-            cursorClassName="text-[12vw] text-black font-display align-middle"
-            className="font-display font-black text-[15vw] leading-[0.82] tracking-[-0.05em] uppercase text-black block"
+            cursorClassName="text-[10vw] text-black font-display align-middle"
+            className="font-display font-black text-[12vw] leading-[0.9] tracking-[-0.02em] uppercase text-black block"
           />
         </motion.div>
 
@@ -680,22 +680,18 @@ export default function Home() {
 
       {/* 8. GIANT CTA SECTION WITH VIEWPANEL ZOOM-UPS */}
       <section id="manifesto" className="bg-[#FF4D00] text-black py-32 px-6 border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10">
-        <div className="max-w-4xl mx-auto space-y-12">
+        <div className="max-w-4xl w-full mx-auto space-y-12">
           
-          <SplitText
-            text="START SWAPPING"
-            className="font-display font-black text-[10vw] sm:text-[8vw] leading-[0.82] tracking-[-0.05em] uppercase text-black block"
-            delay={60}
-            duration={0.8}
-            ease="power4.out"
-            splitType="chars"
-            from={{ opacity: 0, y: 60 }}
-            to={{ opacity: 1, y: 0 }}
-            threshold={0.1}
-            rootMargin="-100px"
-            textAlign="center"
-            tag="h2"
-          />
+          <motion.h2
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ type: "spring", stiffness: 60, damping: 14 }}
+            className="font-display font-black text-[8vw] sm:text-[6vw] leading-[0.9] tracking-[-0.02em] uppercase text-black block text-center"
+          >
+            <span className="block">START</span>
+            <span className="block -translate-x-4 sm:-translate-x-12">SWAPPING</span>
+          </motion.h2>
           
           <SplitText
             text="BUILD LIFELONG COMMUNITY FRIENDSHIPS AND LEARN MASTER TRADES WITHOUT SPENDING A SINGLE CENT. JOIN YOUR LOCAL NEIGHBORS TODAY."
@@ -721,7 +717,7 @@ export default function Home() {
           >
             <a 
               href="/auth/signup"
-              className="inline-flex items-center gap-3 bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#FFFFFF] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-3 bg-black hover:bg-white text-white hover:text-black font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#FFFFFF] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-64 justify-center"
             >
               <span>CREATE FREE ACCOUNT</span>
               <ArrowUpRight className="w-5 h-5 stroke-[2.5px]" />
@@ -729,7 +725,7 @@ export default function Home() {
 
             <a 
               href="/demo"
-              className="inline-flex items-center gap-3 bg-white hover:bg-black text-black hover:text-white font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-3 bg-white hover:bg-black text-black hover:text-white font-mono font-bold text-sm tracking-wider px-6 sm:px-10 py-4 sm:py-5 rounded-full border-2 border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer uppercase w-full sm:w-64 justify-center"
             >
               <span>VIEW DEMO</span>
               <ArrowUpRight className="w-5 h-5 stroke-[2.5px]" />

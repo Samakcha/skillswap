@@ -166,9 +166,10 @@ const SplitText = ({
     const style = {
       textAlign,
       overflow: 'hidden',
-      display: 'inline-block',
+      display: className.includes('inline') ? 'inline-block' : 'block',
       whiteSpace: 'normal' as const,
-      wordWrap: 'break-word' as const,
+      wordBreak: 'keep-all' as const,
+      overflowWrap: 'normal' as const,
       willChange: 'transform, opacity'
     };
     const classes = `split-parent ${className}`;

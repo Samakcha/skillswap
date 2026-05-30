@@ -173,7 +173,7 @@ export default function SignUpPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-black text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
+                <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
                   RETURN | VOLLEY SECURED
                 </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight leading-none">
@@ -237,7 +237,7 @@ export default function SignUpPage() {
                       SKILLSWAP
                     </span>
                   </Link>
-                  <div className="px-3 py-1 border border-[#FF4D00]/20 rounded-full font-mono text-[8px] font-black uppercase tracking-widest text-[#FF4D00]/95 bg-[#FF4D00]/5">
+                  <div className="px-3 py-1 border border-[#FF4D00]/20 rounded-full font-mono text-[8px] font-bold uppercase tracking-widest text-[#FF4D00]/95 bg-[#FF4D00]/5">
                     SERVE: ACTIVE SWAP OFFERS
                   </div>
                 </div>

@@ -164,6 +164,8 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       setIsNotificationsOpen(false)
       if (notif.type === 'message' && notif.related_user_id) {
         router.push(`/messages/${notif.related_user_id}?post=${notif.related_post_id || ''}`)
+      } else if ((notif.type === 'like' || notif.type === 'unlike') && notif.related_user_id) {
+        router.push(`/profile/${notif.related_user_id}`)
       } else if (notif.type === 'review') {
         router.push(`/profile/${user?.id || ''}`)
       } else if (notif.related_post_id) {
@@ -534,7 +536,7 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
                 <span className="truncate">{item.name}</span>
               </div>
               {isMessages && unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-md bg-[#FF4D00] text-black text-[10px] font-black shadow-md shrink-0">
+                <span className="px-2 py-0.5 rounded-md bg-[#FF4D00] text-black text-[10px] font-bold shadow-md shrink-0">
                   {unreadCount}
                 </span>
               )}
@@ -619,27 +621,26 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
 
   return (
     <>
-      {/* FLOATING THEME TOGGLE */}
-      <motion.button
-        type="button"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-        onClick={handleThemeToggle}
-        animate={{ rotate: isHovered ? [0, 1.5, -1.5, 1, 0] : 0 }}
-        transition={{ duration: 1.2, ease: "easeInOut" }}
-        className={`fixed right-4 bottom-5 lg:right-6 lg:top-6 lg:bottom-auto z-[70] flex items-center gap-2 rounded-2xl border px-3.5 py-3 shadow-2xl backdrop-blur-xl active:scale-95 transition-all duration-200 cursor-pointer ${
-          theme === 'light'
-            ? 'bg-black text-[#FF4D00] border-[#FF4D00] shadow-[0_0_18px_rgba(255,77,0,0.35)]'
-            : 'bg-black/90 text-white border-white/15 hover:border-[#FF4D00]/70 hover:text-[#FF4D00]'
-        }`}
-        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-        aria-label={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-      >
-        <Lightbulb className={`w-4.5 h-4.5 shrink-0 transition-transform ${theme === 'light' ? 'stroke-[2.5px] scale-110' : 'stroke-[1.8px]'}`} />
-        <span className="hidden sm:inline font-mono text-[10px] font-black uppercase tracking-widest">
-          {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
-        </span>
-      </motion.button>
+      {/* FLOATING THEME TOGGLE (Hidden when notifications or blocked users drawer is open) */}
+      {!isNotificationsOpen && !isBlockedUsersOpen && (
+        <motion.button
+          type="button"
+          onHoverStart={() => setIsHovered(true)}
+          onHoverEnd={() => setIsHovered(false)}
+          onClick={handleThemeToggle}
+          animate={{ rotate: isHovered ? [0, 1.5, -1.5, 1, 0] : 0 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+          className={`fixed right-4 bottom-5 lg:right-6 lg:top-6 lg:bottom-auto z-[70] flex items-center justify-center w-12 h-12 rounded-full border shadow-2xl backdrop-blur-xl active:scale-95 transition-all duration-200 cursor-pointer ${
+            theme === 'light'
+              ? 'bg-black text-[#FF4D00] border-[#FF4D00] shadow-[0_0_18px_rgba(255,77,0,0.35)]'
+              : 'bg-black/90 text-white border-white/15 hover:border-[#FF4D00]/70 hover:text-[#FF4D00]'
+          }`}
+          title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+          aria-label={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+        >
+          <Lightbulb className={`w-5 h-5 shrink-0 transition-transform ${theme === 'light' ? 'stroke-[2.5px] scale-110' : 'stroke-[1.8px]'}`} />
+        </motion.button>
+      )}
 
       {/* 1. DESKTOP STICKY SIDEBAR */}
       <aside 

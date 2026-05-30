@@ -9,9 +9,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-display)', 'Archivo Black', 'sans-serif'],
+        display: ['var(--font-display)', 'Syne', 'sans-serif'],
         mono: ['var(--font-mono)', 'Space Mono', 'monospace'],
-        sans: ['var(--font-sans)', 'Inter', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Syne', 'sans-serif'],
       },
     },
   },

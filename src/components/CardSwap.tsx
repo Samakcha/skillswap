@@ -366,7 +366,7 @@ export default function CardSwap({
       {/* 1. CUSTOM BRAND CURSOR / FLOATING HINT */}
       {showDragHint && !isAnimating && (
         <div 
-          className="absolute z-50 pointer-events-none bg-black text-white font-mono text-[9px] font-black px-3 py-1.5 rounded-full border border-[#FF4D00] shadow-xl uppercase tracking-widest whitespace-nowrap opacity-90 transition-opacity duration-300 hidden md:block"
+          className="absolute z-50 pointer-events-none bg-black text-white font-mono text-[9px] font-bold px-3 py-1.5 rounded-full border border-[#FF4D00] shadow-xl uppercase tracking-widest whitespace-nowrap opacity-90 transition-opacity duration-300 hidden md:block"
           style={{
             left: hintPos.x + 18,
             top: hintPos.y + 18,
@@ -412,7 +412,7 @@ export default function CardSwap({
                   <h5 className="font-display font-black text-[11px] tracking-tight text-black leading-tight">
                     {card.name}
                   </h5>
-                  <p className="font-mono text-[9px] font-black text-black/55 uppercase tracking-widest mt-0.5">
+                  <p className="font-mono text-[9px] font-bold text-black/55 uppercase tracking-widest mt-0.5">
                     {card.location}
                   </p>
                 </div>
@@ -421,7 +421,7 @@ export default function CardSwap({
               {/* High-impact brutalist Heart Like Button */}
               <button 
                 onClick={(e) => handleLike(e, card.id)}
-                className={`interactive-btn flex items-center gap-1.5 px-3 py-1.5 border border-black rounded-full font-mono text-[10px] font-black transition-all active:scale-90 cursor-pointer ${
+                className={`interactive-btn flex items-center gap-1.5 px-3 py-1.5 border border-black rounded-full font-mono text-[10px] font-bold transition-all active:scale-90 cursor-pointer ${
                   card.isLiked 
                     ? 'bg-[#FF4D00] text-white border-[#FF4D00]' 
                     : 'bg-white text-black hover:bg-black/5'
@@ -448,7 +448,7 @@ export default function CardSwap({
                 {card.tags.slice(0, 3).map((tag) => (
                   <span
                     key={tag}
-                    className="bg-[#FF4D00]/10 border border-[#FF4D00]/25 text-black font-mono text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    className="bg-[#FF4D00]/10 border border-[#FF4D00]/25 text-black font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
                   >
                     {tag}
                   </span>
@@ -459,14 +459,14 @@ export default function CardSwap({
               {interactiveButtons ? (
                 <a 
                   href="/auth/signup"
-                  className="interactive-btn shrink-0 group flex items-center gap-1 bg-black text-white hover:bg-[#FF4D00] hover:text-white font-mono text-[9px] font-black px-3.5 py-2 rounded-full border border-black transition-all active:scale-95 duration-200 uppercase tracking-tight"
+                  className="interactive-btn shrink-0 group flex items-center gap-1 bg-black text-white hover:bg-[#FF4D00] hover:text-white font-mono text-[9px] font-bold px-3.5 py-2 rounded-full border border-black transition-all active:scale-95 duration-200 uppercase tracking-tight"
                 >
                   <span>Swap</span>
                   <ArrowUpRight className="w-3 h-3 stroke-[3px] group-hover:rotate-45 transition-transform duration-200" />
                 </a>
               ) : (
                 <div 
-                  className="interactive-btn shrink-0 group flex items-center gap-1 bg-black text-white hover:bg-[#FF4D00] hover:text-white font-mono text-[9px] font-black px-3.5 py-2 rounded-full border border-black transition-all duration-200 uppercase tracking-tight cursor-default select-none"
+                  className="interactive-btn shrink-0 group flex items-center gap-1 bg-black text-white hover:bg-[#FF4D00] hover:text-white font-mono text-[9px] font-bold px-3.5 py-2 rounded-full border border-black transition-all duration-200 uppercase tracking-tight cursor-default select-none"
                 >
                   <span>Swap</span>
                   <ArrowUpRight className="w-3 h-3 stroke-[3px] group-hover:rotate-45 transition-transform duration-200" />
