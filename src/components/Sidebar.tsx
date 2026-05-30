@@ -38,9 +38,15 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('skillswap_sidebar_collapsed') === 'true'
+  })
   const [unreadCount, setUnreadCount] = useState(0)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof document === 'undefined') return 'dark'
+    return document.documentElement.classList.contains('light') ? 'light' : 'dark'
+  })
   const [isHovered, setIsHovered] = useState(false)
 
   // Invite states
@@ -61,12 +67,6 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
   const [blockedListLoading, setBlockedListLoading] = useState(false)
   const [unblockingUserId, setUnblockingUserId] = useState<string | null>(null)
 
-  // Load and sync theme from document class
-  useEffect(() => {
-    const active = document.documentElement.classList.contains('light') ? 'light' : 'dark'
-    setTheme(active)
-  }, [])
-
   const handleThemeToggle = (e: React.MouseEvent) => {
     const x = e.clientX
     const y = e.clientY
@@ -85,7 +85,6 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       }
     }
 
-    // @ts-ignore
     if (!document.startViewTransition) {
       updateThemeState()
       return
@@ -96,7 +95,6 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       Math.max(y, window.innerHeight - y)
     )
 
-    // @ts-ignore
     const transition = document.startViewTransition(() => {
       updateThemeState()
     })
@@ -289,16 +287,6 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
     }
   }
 
-  // Safe client-only load to prevent Next.js hydration mismatch
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('skillswap_sidebar_collapsed')
-      if (saved === 'true') {
-        setIsCollapsed(true)
-      }
-    }
-  }, [])
-
   // Fetch and subscribe to unread message count in real-time
   useEffect(() => {
     if (!user?.id || !supabase) return
@@ -350,7 +338,7 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
 
   // Auto-close mobile drawer when route changes
   useEffect(() => {
-    setMobileOpen(false)
+    queueMicrotask(() => setMobileOpen(false))
   }, [pathname])
 
   // Onboarding Walkthrough Sidebar Toggle Custom Event Listeners
@@ -457,8 +445,8 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
     return pathname?.startsWith(path)
   }
 
-  // Sidebar Inner Content Component
-  const SidebarContent = () => (
+  // Sidebar Inner Content
+  const renderSidebarContent = () => (
     <div className="flex flex-col h-full text-gray-200 select-none" style={{ backgroundColor: 'var(--app-sidebar-bg)' }}>
       {/* Sidebar Header */}
       <div className="p-5 flex flex-col gap-5 shrink-0">
@@ -652,7 +640,7 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       >
         {/* Force contents to occupy exact layout width to prevent shrinking elements during collapse */}
         <div className="h-full w-64 xl:w-72 shrink-0">
-          <SidebarContent />
+          {renderSidebarContent()}
         </div>
       </aside>
 
@@ -768,7 +756,7 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
               className="lg:hidden fixed inset-y-0 left-0 w-64 xs:w-72 max-w-[85vw] z-50 shadow-2xl h-full"
             >
               <div className="h-full border-r border-white/[0.04]">
-                <SidebarContent />
+                {renderSidebarContent()}
               </div>
             </motion.div>
           </>

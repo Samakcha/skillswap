@@ -153,14 +153,11 @@ export default function DemoPage() {
 
   // Custom Toast State
   const [toasts, setToasts] = useState<Toast[]>([])
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof document === 'undefined') return 'dark'
+    return document.documentElement.classList.contains('light') ? 'light' : 'dark'
+  })
   const [isHovered, setIsHovered] = useState(false)
-
-  // Sync theme on mount
-  useEffect(() => {
-    const active = document.documentElement.classList.contains('light') ? 'light' : 'dark'
-    setTheme(active)
-  }, [])
 
   const handleThemeToggle = (e: React.MouseEvent) => {
     const x = e.clientX
@@ -180,7 +177,6 @@ export default function DemoPage() {
       }
     }
 
-    // @ts-ignore
     if (!document.startViewTransition) {
       updateThemeState()
       return
@@ -191,7 +187,6 @@ export default function DemoPage() {
       Math.max(y, window.innerHeight - y)
     )
 
-    // @ts-ignore
     const transition = document.startViewTransition(() => {
       updateThemeState()
     })

@@ -2,11 +2,11 @@
 
 import { createClient } from '@/lib/supabase'
 import SplitText from '@/components/SplitText'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Layers, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Layers, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import CardSwap from '@/components/CardSwap'
 
 // Framer Motion Animation Presets
@@ -36,21 +36,19 @@ export default function SignUpPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
-  const [pinCode, setPinCode] = useState('')
+  const [pinCode, setPinCode] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return new URLSearchParams(window.location.search).get('pin_code') || ''
+  })
   const [password, setPassword] = useState('')
   
   const [showPassword, setShowPassword] = useState(false)
 
-  // Pre-fill pin_code from query parameter
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const code = params.get('pin_code')
-      if (code) {
-        setPinCode(code)
-      }
-    }
-  }, [])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
+  const [redirectMessage, setRedirectMessage] = useState('Initializing volley...')
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -77,12 +75,6 @@ export default function SignUpPage() {
       clearTimeout(fallbackTimer)
     }
   }, [])
-
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [isRedirecting, setIsRedirecting] = useState(false)
-  const [redirectMessage, setRedirectMessage] = useState('Initializing volley...')
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()

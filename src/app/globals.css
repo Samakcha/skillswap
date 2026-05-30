@@ -272,3 +272,13 @@ h5,
 h6 {
   font-family: 'Syne', sans-serif !important;
 }
+
+/* Hides scrollbar track while preserving scroll functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE / Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome / Safari / Opera */
+}

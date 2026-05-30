@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, createElement, useMemo, useCallback, ElementType, ReactNode } from 'react';
+import { useEffect, useState, createElement, useMemo, useCallback, ElementType, ReactNode, HTMLAttributes } from 'react';
 import { gsap } from 'gsap';
 import './TextType.css';
 
@@ -23,7 +23,6 @@ interface TextTypeProps {
   onSentenceComplete?: (sentence: string, index: number) => void;
   startOnVisible?: boolean;
   reverseMode?: boolean;
-  [key: string]: any;
 }
 
 const TextType = ({
@@ -52,8 +51,8 @@ const TextType = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
-  const cursorRef = useRef<HTMLSpanElement | null>(null);
-  const containerRef = useRef<HTMLElement | null>(null);
+  const [cursorElement, setCursorElement] = useState<HTMLSpanElement | null>(null);
+  const [containerElement, setContainerElement] = useState<HTMLElement | null>(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
 
@@ -69,7 +68,7 @@ const TextType = ({
   };
 
   useEffect(() => {
-    if (!startOnVisible || !containerRef.current) return;
+    if (!startOnVisible || !containerElement) return;
 
     const observer = new IntersectionObserver(
       entries => {
@@ -82,14 +81,14 @@ const TextType = ({
       { threshold: 0.1 }
     );
 
-    observer.observe(containerRef.current);
+    observer.observe(containerElement);
     return () => observer.disconnect();
-  }, [startOnVisible]);
+  }, [containerElement, startOnVisible]);
 
   useEffect(() => {
-    if (showCursor && cursorRef.current) {
-      gsap.set(cursorRef.current, { opacity: 1 });
-      const tween = gsap.to(cursorRef.current, {
+    if (showCursor && cursorElement) {
+      gsap.set(cursorElement, { opacity: 1 });
+      const tween = gsap.to(cursorElement, {
         opacity: 0,
         duration: cursorBlinkDuration,
         repeat: -1,
@@ -100,7 +99,7 @@ const TextType = ({
         tween.kill();
       };
     }
-  }, [showCursor, cursorBlinkDuration]);
+  }, [cursorElement, showCursor, cursorBlinkDuration]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -178,10 +177,10 @@ const TextType = ({
   return createElement(
     Component,
     {
-      ref: containerRef,
+      ref: setContainerElement,
       className: `text-type ${className}`,
-      ...props
-    },
+      ...(props as HTMLAttributes<HTMLElement>)
+    } as HTMLAttributes<HTMLElement>,
     createElement(
       'span',
       {
@@ -193,7 +192,7 @@ const TextType = ({
     showCursor && createElement(
       'span',
       {
-        ref: cursorRef,
+        ref: setCursorElement,
         className: `text-type__cursor ${cursorClassName} ${shouldHideCursor ? 'text-type__cursor--hidden' : ''}`
       },
       cursorCharacter

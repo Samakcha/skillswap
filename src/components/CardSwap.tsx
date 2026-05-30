@@ -89,6 +89,7 @@ export default function CardSwap({
   const [hintPos, setHintPos] = useState({ x: 0, y: 0 })
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const particleIdRef = useRef(0)
   const cardsRef = useRef<(HTMLDivElement | null)[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isHoveredRef = useRef<boolean>(false)
@@ -316,7 +317,7 @@ export default function CardSwap({
       const y = e.clientY - rect.top
       
       const newParticle = {
-        id: Date.now() + Math.random(),
+        id: ++particleIdRef.current,
         x,
         y
       }

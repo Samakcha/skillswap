@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import SplitText from '@/components/SplitText'
+import CircularGallery from '@/components/CircularGallery'
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,6 +14,7 @@ import {
   Compass, 
   Clock, 
   ArrowUpRight, 
+  ArrowRight,
   Tag, 
   MessageSquare, 
   Star, 
@@ -24,7 +26,11 @@ import {
   Camera,
   Loader2,
   Ban,
-  Flag
+  Flag,
+  Heart,
+  X,
+  Trash2,
+  Check
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
@@ -56,6 +62,89 @@ export default function UserProfilePage() {
   const [reportReason, setReportReason] = useState('Spam')
   const [reportDetails, setReportDetails] = useState('')
   const [reportLoading, setReportLoading] = useState(false)
+
+  // View Post Modal details state
+  const [selectedPost, setSelectedPost] = useState<any | null>(null)
+  const [selectedPostRating, setSelectedPostRating] = useState<string>('0')
+  const [selectedPostRatingCount, setSelectedPostRatingCount] = useState<number>(0)
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
+  const [modalLoading, setModalLoading] = useState(false)
+
+  // Custom Toast Notifications
+  interface Toast {
+    id: string
+    message: string
+    type: 'success' | 'error' | 'info'
+  }
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Math.random().toString(36).substring(2, 9)
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, 4000)
+  }
+
+  // Escape key close listener for detail modal and lightbox
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setActiveLightboxImage(null)
+        setSelectedPost(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Fetch post owner's average rating when modal is opened
+  useEffect(() => {
+    if (!selectedPost) {
+      queueMicrotask(() => {
+        setSelectedPostRating('0')
+        setSelectedPostRatingCount(0)
+      })
+      return
+    }
+
+    async function loadPostOwnerRating() {
+      try {
+        const { data: reviewsData } = await supabase
+          .from('reviews')
+          .select('rating')
+          .eq('reviewed_id', selectedPost.user_id)
+
+        if (reviewsData && reviewsData.length > 0) {
+          const totalRating = reviewsData.reduce((acc: number, curr: any) => acc + (curr.rating || 0), 0)
+          const avg = (totalRating / reviewsData.length).toFixed(1)
+          setSelectedPostRating(avg)
+          setSelectedPostRatingCount(reviewsData.length)
+        } else {
+          setSelectedPostRating('0')
+          setSelectedPostRatingCount(0)
+        }
+      } catch (err) {
+        console.error('Error fetching post owner rating:', err)
+        setSelectedPostRating('0')
+        setSelectedPostRatingCount(0)
+      }
+    }
+
+    loadPostOwnerRating()
+  }, [selectedPost])
+
+  // Helper to enrich posts with likes metadata using pre-fetched database relationships
+  function enrichPostsList(postsList: any[], currentUserId: string | null) {
+    return postsList.map((post) => {
+      const likes = post.likes || []
+      return {
+        ...post,
+        like_count: likes.length,
+        has_liked: currentUserId ? likes.some((l: any) => l.user_id === currentUserId) : false
+      }
+    })
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -105,12 +194,27 @@ export default function UserProfilePage() {
           .eq('id', targetUserId)
           .single() as any)
 
-        const postsRes = await (supabase
-          .from('posts')
-          .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood)')
-          .eq('user_id', targetUserId)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false }) as any)
+        let postsRes: any
+        try {
+          postsRes = await (supabase
+            .from('posts')
+            .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), post_media(url, type), likes(user_id)')
+            .eq('user_id', targetUserId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false }) as any)
+          
+          if (postsRes.error) {
+            throw postsRes.error
+          }
+        } catch (queryErr: any) {
+          console.warn("Post media query failed, falling back to schema without post_media:", queryErr.message || queryErr)
+          postsRes = await (supabase
+            .from('posts')
+            .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), likes(user_id)')
+            .eq('user_id', targetUserId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false }) as any)
+        }
 
         const reviewsRes = await (supabase
           .from('reviews')
@@ -124,7 +228,9 @@ export default function UserProfilePage() {
         }
 
         setViewedProfile(profileRes.data)
-        setViewedPosts((postsRes.data as any[]) || [])
+        
+        const enriched = enrichPostsList((postsRes.data as any[]) || [], loggedInUser?.id)
+        setViewedPosts(enriched)
         
         const reviewsData = (reviewsRes.data as any[]) || []
         setViewedReviews(reviewsData)
@@ -142,6 +248,156 @@ export default function UserProfilePage() {
 
     loadData()
   }, [targetUserId])
+
+  async function handleLikeClick(e: React.MouseEvent, post: any) {
+    e.stopPropagation()
+    e.preventDefault()
+    
+    if (!currentUser || !currentProfile) {
+      showToast("You must be logged in to like posts.", "error")
+      return
+    }
+
+    const postId = post.id
+    const wasLiked = post.has_liked
+    const originalCount = post.like_count || 0
+
+    // Optimistic Update (instant UI feedback)
+    setViewedPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          has_liked: !wasLiked,
+          like_count: wasLiked ? Math.max(0, originalCount - 1) : originalCount + 1
+        }
+      }
+      return p
+    }))
+
+    try {
+      if (wasLiked) {
+        // Unlike: delete row from likes table
+        const { error } = await (supabase
+          .from('likes') as any)
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', currentUser.id)
+
+        if (error) throw error
+        showToast("Post unliked.", "success")
+
+        // Insert unlike notification for post owner
+        if (post.user_id !== currentUser.id) {
+          const { error: notifError } = await (supabase.from('notifications') as any).insert({
+            user_id: post.user_id, // post owner's id
+            type: 'unlike',
+            message: `${currentProfile.full_name || 'Someone'} unliked your post`,
+            related_post_id: postId,
+            related_user_id: currentUser.id,
+            is_read: false
+          })
+
+          if (notifError) {
+            console.error("Error inserting unlike notification:", notifError)
+          }
+        }
+      } else {
+        // Like: insert row into likes table
+        const { error } = await (supabase
+          .from('likes') as any)
+          .insert({
+            post_id: postId,
+            user_id: currentUser.id
+          })
+
+        if (error) throw error
+        showToast("Post liked!", "success")
+
+        // Insert notification for post owner
+        if (post.user_id !== currentUser.id) {
+          const { error: notifError } = await (supabase.from('notifications') as any).insert({
+            user_id: post.user_id, // post owner's id
+            type: 'like',
+            message: `${currentProfile.full_name || 'Someone'} liked your post`,
+            related_post_id: postId,
+            related_user_id: currentUser.id,
+            is_read: false
+          })
+
+          if (notifError) {
+            console.error("Error inserting like notification:", notifError)
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Error toggling like:", err)
+      // Revert optimistic update
+      setViewedPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            has_liked: wasLiked,
+            like_count: originalCount
+          }
+        }
+        return p
+      }))
+      showToast(err.message || "Failed to like post.", "error")
+    }
+  }
+
+  // Handle logical deletion of owned posts
+  async function handleDeletePost(postId: string) {
+    if (!window.confirm("Are you sure you want to delete this swap proposal? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      const { error } = await (supabase
+        .from('posts') as any)
+        .update({ is_active: false })
+        .eq('id', postId)
+
+      if (error) {
+        showToast("Failed to delete post: " + error.message, "error")
+        return
+      }
+
+      // Smoothly update local React state to animate card dismissal
+      setViewedPosts(prev => prev.filter(p => p.id !== postId))
+      showToast("Swap proposal deleted successfully.", "success")
+    } catch (err: any) {
+      showToast("Error deleting post: " + err.message, "error")
+    }
+  }
+
+  // Deactivate the post and mark as complete
+  async function handleMarkAsComplete(postId: string) {
+    if (!window.confirm("Are you sure you want to mark this skill swap as completed? This will close the proposal.")) {
+      return
+    }
+
+    setModalLoading(true)
+    try {
+      const { error } = await (supabase
+        .from('posts') as any)
+        .update({ is_active: false })
+        .eq('id', postId)
+
+      if (error) {
+        showToast("Failed to complete post: " + error.message, "error")
+        return
+      }
+
+      // Smoothly update local React state to dismiss card
+      setViewedPosts(prev => prev.filter(p => p.id !== postId))
+      showToast("Swap marked as complete successfully!", "success")
+    } catch (err: any) {
+      showToast("Error completing post: " + err.message, "error")
+    } finally {
+      setModalLoading(false)
+    }
+  }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
@@ -672,9 +928,17 @@ export default function UserProfilePage() {
                           </span>
                         )}
 
-                        <div className="flex items-center gap-1 text-[9px] font-mono text-black/40 uppercase font-bold">
-                          <Clock className="w-3.5 h-3.5 text-black/30" />
-                          <span>{formatDate(post.created_at)}</span>
+                        {/* Created date display & Like count display-only badge */}
+                        <div className="flex items-center gap-2 relative z-20">
+                          <div className="flex items-center gap-1 text-[9px] font-mono text-black/40 uppercase tracking-wider font-bold">
+                            <Clock className="w-3.5 h-3.5 text-black/30" />
+                            <span>{formatDate(post.created_at)}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1 px-2.5 py-0.5 border border-black/10 rounded-full font-mono text-[9px] font-bold bg-white text-black">
+                            <Heart className={`w-3 h-3 transition-colors ${post.has_liked ? 'fill-pink-500 text-pink-500' : 'text-pink-500'}`} />
+                            <span>{post.like_count || 0}</span>
+                          </div>
                         </div>
                       </div>
 
@@ -688,8 +952,8 @@ export default function UserProfilePage() {
                           <span>Skill: {post.skill}</span>
                         </div>
 
-                        <p className="text-black/80 text-xs font-semibold leading-relaxed line-clamp-3 pt-1">
-                           {post.description}
+                        <p className="text-black/80 text-xs font-semibold leading-relaxed line-clamp-2 pt-1">
+                          {post.description}
                         </p>
                       </div>
                     </div>
@@ -715,15 +979,17 @@ export default function UserProfilePage() {
                         </span>
                       </div>
 
-                      {!isOwnProfile && (
+                      {/* View Post Button */}
+                      <div className="shrink-0 pl-2">
                         <button
-                          onClick={() => router.push(`/messages/${targetUserId}?post=${post.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FF4D00] hover:bg-black border-2 border-black text-black hover:text-white font-mono font-black text-[9px] uppercase tracking-wider transition-all shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer group/btn"
+                          type="button"
+                          onClick={() => setSelectedPost(post)}
+                          className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-black hover:bg-[#FF4D00] hover:text-black text-white border border-white/10 hover:border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] cursor-pointer"
                         >
-                          <span>Swap</span>
-                          <ArrowUpRight className="w-3 h-3 stroke-[2.5px] text-current group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all" />
+                          <span>View Post</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1003,6 +1269,368 @@ export default function UserProfilePage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* DETAILED VIEW POST OVERLAY MODAL */}
+      <AnimatePresence>
+        {selectedPost && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            {/* Dark Backdrop with Glassmorphism */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedPost(null)}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md skillswap-grid-bg skillswap-grid-bg-sm"
+            />
+
+            {/* Modal Content Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              transition={{ type: 'spring', duration: 0.5, bounce: 0.15 }}
+              className="relative w-full max-w-4xl bg-[#09090b] border-2 border-white/10 rounded-[2.5rem] p-5 sm:p-8 md:p-10 shadow-[16px_16px_0px_#FF4D00] overflow-hidden flex flex-col gap-6 md:gap-8 max-h-[85vh] overflow-y-auto z-10 no-scrollbar"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <style>{`
+                .no-scrollbar::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              {/* Decorative Glow elements */}
+              <div className="absolute -top-32 -left-32 w-[300px] h-[300px] rounded-full bg-[#FF4D00]/10 blur-[80px] pointer-events-none z-0" />
+              <div className="absolute bottom-[-100px] right-[-100px] w-[250px] h-[250px] rounded-full bg-[#FF4D00]/5 blur-[70px] pointer-events-none z-0" />
+
+              {/* HEADER SECTION: Post Owner Card & Rating */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6 relative z-10">
+                <div 
+                  onClick={() => {
+                    setSelectedPost(null);
+                    router.push(`/profile/${selectedPost.user_id}`);
+                  }}
+                  className="flex items-center gap-3.5 group/author cursor-pointer"
+                  title="View Profile"
+                >
+                  {/* Big Avatar */}
+                  <div className="w-12 h-12 rounded-full border-2 border-[#FF4D00] bg-black text-[#FF4D00] flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden shadow-[0_0_15px_rgba(255,77,0,0.15)] group-hover/author:border-white transition-colors duration-300">
+                    {selectedPost.profiles?.avatar_url ? (
+                      <img 
+                        src={selectedPost.profiles.avatar_url} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover/author:scale-105" 
+                        alt="" 
+                      />
+                    ) : (
+                      <span>{selectedPost.profiles?.full_name?.charAt(0).toUpperCase() || 'S'}</span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-widest leading-none">PROPOSAL CREATOR</div>
+                    <h3 className="font-display font-black text-white text-base sm:text-lg uppercase tracking-tight leading-none group-hover/author:text-[#FF4D00] transition-colors duration-300">
+                      {selectedPost.profiles?.full_name}
+                    </h3>
+                    
+                    {/* Location & Rating */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-white/50 flex items-center gap-0.5">
+                        <MapPin className="w-3 h-3 text-[#FF4D00]" />
+                        <span>{selectedPost.profiles?.neighborhood || 'Local Area'}</span>
+                      </div>
+                      
+                      {/* Rating Stats */}
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                        <span>⭐</span>
+                        <span>{selectedPostRating} / 5.0</span>
+                        <span className="text-white/30">({selectedPostRatingCount} reviews)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPost(null)}
+                  className="absolute sm:relative top-0 right-0 sm:top-auto sm:right-auto w-9 h-9 rounded-xl bg-black hover:bg-[#161618] border border-white/10 hover:border-[#FF4D00] text-white/50 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
+                  title="Close Modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* MAIN CONTENT SECTION: SPLIT PANEL */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+                
+                {/* LEFT COL: Proposal Details */}
+                <div className={`space-y-5 ${selectedPost.post_media && selectedPost.post_media.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+                  
+                  {/* BADGES */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {selectedPost.type === 'offer' ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 text-[9px] font-mono font-bold uppercase tracking-widest">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Offering a Skill
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#FF4D00]/10 text-[#FF4D00] border border-[#FF4D00]/25 text-[9px] font-mono font-bold uppercase tracking-widest">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FF4D00] animate-pulse" />
+                        Requesting a Skill
+                      </span>
+                    )}
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#FF4D00]/10 border border-[#FF4D00]/20 text-[10px] font-mono font-bold uppercase text-white tracking-wider">
+                      <Tag className="w-3.5 h-3.5 text-[#FF4D00]" />
+                      <span>Skill: {selectedPost.skill}</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1 text-[9px] font-mono text-white/35 uppercase tracking-wider font-bold">
+                      <Clock className="w-3.5 h-3.5 text-[#FF4D00]" />
+                      <span>Posted on {formatDate(selectedPost.created_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* Title & Description */}
+                  <div className="space-y-3.5">
+                    <h2 className="font-display font-black text-white text-xl sm:text-2xl uppercase tracking-tight leading-tight">
+                      {selectedPost.title}
+                    </h2>
+                    <p className="text-white/80 text-xs sm:text-sm font-semibold leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto pr-1">
+                      {selectedPost.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* RIGHT COL: Media Gallery */}
+                {selectedPost.post_media && selectedPost.post_media.length > 0 && (
+                  <div className="lg:col-span-5 space-y-4 flex flex-col justify-center min-h-[380px]">
+                    <div className="font-mono text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                      {selectedPost.post_media.length === 1 ? 'PROPOSAL MEDIA (Click to enlarge)' : 'PROPOSAL GALLERY (Drag to scroll, Click to enlarge)'}
+                    </div>
+
+                    <div className="relative w-full h-[380px] rounded-2xl overflow-hidden border border-white/10 bg-black/40 backdrop-blur-sm shadow-inner">
+                      {selectedPost.post_media.length === 1 ? (
+                        // Single media — plain full-cover view with click-to-lightbox
+                        <button
+                          type="button"
+                          onClick={() => setActiveLightboxImage(selectedPost.post_media[0].url)}
+                          className="w-full h-full block group relative cursor-zoom-in"
+                        >
+                          {selectedPost.post_media[0].type === 'video' || selectedPost.post_media[0].url.toLowerCase().endsWith('.mp4') ? (
+                            <video
+                              src={selectedPost.post_media[0].url}
+                              className="w-full h-full object-cover"
+                              preload="metadata"
+                            />
+                          ) : (
+                            <img
+                              src={selectedPost.post_media[0].url}
+                              alt={selectedPost.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                            />
+                          )}
+                          {/* Zoom-in hint overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-3 py-1.5 rounded-xl bg-black/70 border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-widest backdrop-blur-sm">
+                              Click to enlarge
+                            </span>
+                          </div>
+                        </button>
+                      ) : (
+                        // Multiple media — CircularGallery WebGL carousel
+                        <CircularGallery
+                          items={selectedPost.post_media.map((media: any) => ({
+                            image: media.url,
+                            text: selectedPost.title
+                          }))}
+                          bend={3}
+                          textColor="#ffffff"
+                          borderRadius={0.05}
+                          scrollEase={0.03}
+                          scrollSpeed={2}
+                          onItemClick={(idx: number) => {
+                            const media = selectedPost.post_media[idx];
+                            if (media) {
+                              setActiveLightboxImage(media.url);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* FOOTER ACTIONS SECTION */}
+              <div className="border-t border-white/[0.08] pt-6 flex flex-wrap items-center justify-between gap-4 mt-auto relative z-10">
+                {/* Left Side: Likes badge indicator inside modal */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 border border-white/15 rounded-full font-mono text-[10px] font-bold bg-white/5 text-white">
+                    <Heart className={`w-3.5 h-3.5 transition-colors ${selectedPost.has_liked ? 'fill-pink-500 text-pink-500' : 'text-white/40'}`} />
+                    <span>{selectedPost.like_count || 0} Neighbor{selectedPost.like_count !== 1 ? 's' : ''} liked this</span>
+                  </div>
+                </div>
+
+                {/* Right Side: Interactive actions */}
+                <div className="flex items-center gap-3">
+                  {selectedPost.user_id === currentUser?.id ? (
+                    // OWNER SWAP ACTIONS
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={modalLoading}
+                        onClick={() => {
+                          setSelectedPost(null);
+                          handleMarkAsComplete(selectedPost.id);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-black border border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer disabled:opacity-50"
+                        title="Mark Swap as Complete"
+                      >
+                        <Check className="w-4 h-4 stroke-[2.5px]" />
+                        <span>Complete Swap</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPost(null);
+                          handleDeletePost(selectedPost.id);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white border border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer"
+                        title="Delete Proposal"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete Proposal</span>
+                      </button>
+                    </div>
+                  ) : (
+                    // NEIGHBOR INTERACTIVE ACTIONS
+                    <div className="flex items-center gap-3">
+                      {/* Like Action */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          handleLikeClick(e, selectedPost);
+                          setSelectedPost((prev: any) => {
+                            if (!prev) return prev;
+                            const wasLiked = prev.has_liked;
+                            const originalCount = prev.like_count || 0;
+                            return {
+                              ...prev,
+                              has_liked: !wasLiked,
+                              like_count: wasLiked ? Math.max(0, originalCount - 1) : originalCount + 1
+                            };
+                          });
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-4.5 py-3 border-2 border-black rounded-xl font-mono font-black text-[10px] uppercase tracking-wider transition-all active:scale-95 cursor-pointer shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] group/likebtn ${
+                          selectedPost.has_liked
+                            ? 'bg-pink-500 text-black font-black'
+                            : 'bg-white text-black hover:bg-pink-500'
+                        }`}
+                      >
+                        <Heart className={`w-3.5 h-3.5 transition-colors ${selectedPost.has_liked ? 'fill-black text-black' : 'text-black group-hover/likebtn:fill-black'}`} />
+                        <span>{selectedPost.has_liked ? 'Liked' : 'Like'}</span>
+                      </button>
+
+                      {/* Swap/Chat Action */}
+                      <button
+                        onClick={() => {
+                          setSelectedPost(null);
+                          router.push(`/messages/${selectedPost.user_id}?post=${selectedPost.id}`);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-5 py-3 rounded-xl bg-[#FF4D00] hover:bg-white hover:text-black text-black border border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] cursor-pointer group/modalbtn"
+                      >
+                        <span>SWAP</span>
+                        <ArrowUpRight className="w-4 h-4 text-current group-hover/modalbtn:translate-x-0.5 group-hover/modalbtn:-translate-y-0.5 transition-all stroke-[2.5px]" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* FULL SCREEN LIGHTBOX FOR GALLERY IMAGES/VIDEOS */}
+      <AnimatePresence>
+        {activeLightboxImage && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveLightboxImage(null)}
+              className="absolute inset-0 bg-black/95 cursor-zoom-out"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="relative max-w-5xl max-h-[90vh] z-10 flex flex-col gap-4"
+            >
+              {activeLightboxImage.toLowerCase().endsWith('.mp4') ? (
+                <video
+                  src={activeLightboxImage}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[80vh] object-contain rounded-2xl border border-white/10 bg-black shadow-2xl"
+                />
+              ) : (
+                <img
+                  src={activeLightboxImage}
+                  alt="Enlarged gallery asset"
+                  className="max-w-full max-h-[80vh] object-contain rounded-2xl border border-white/10 bg-black shadow-2xl"
+                />
+              )}
+              
+              <button
+                type="button"
+                onClick={() => setActiveLightboxImage(null)}
+                className="self-center px-4 py-2 bg-white/5 border border-white/10 hover:border-[#FF4D00] hover:text-[#FF4D00] text-white font-mono text-[9px] font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg"
+              >
+                Close Zoom
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CYBERPUNK TOAST NOTIFICATION BOX */}
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm pointer-events-none">
+        <AnimatePresence>
+          {toasts.map(toast => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+              layout
+              className={`p-4 rounded-2xl border-2 pointer-events-auto shadow-lg flex items-center justify-between gap-3 text-xs font-mono uppercase tracking-widest font-black leading-none ${
+                toast.type === 'success' 
+                  ? 'bg-black border-emerald-500/30 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                  : toast.type === 'error'
+                  ? 'bg-black border-rose-500/30 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.15)]'
+                  : 'bg-black border-[#FF4D00]/30 text-[#FF9A3C] shadow-[0_0_20px_rgba(255,77,0,0.15)]'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping shrink-0" />
+                <span>{toast.message}</span>
+              </div>
+              <button 
+                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="hover:scale-110 active:scale-95 text-current/50 hover:text-current transition-all shrink-0 cursor-pointer"
+              >
+                ✕
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
         </motion.div>
       )}
     </AnimatePresence>

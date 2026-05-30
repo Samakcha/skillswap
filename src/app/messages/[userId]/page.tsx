@@ -179,6 +179,12 @@ export default function ChatPage() {
     }
 
     loadMessages()
+  }, [otherId, postId])
+
+  // ─── Realtime subscription — only runs once user is resolved ───────────────
+  useEffect(() => {
+    // Guard: do not subscribe until the user has been authenticated
+    if (!user?.id) return
 
     // Supabase reuses channels by topic name. Keep this subscription instance
     // unique so strict mode or fast refresh cleanup overlap cannot add
@@ -269,7 +275,7 @@ export default function ChatPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [otherId, user?.id, postId])
+  }, [user?.id, otherId, postId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -535,7 +541,7 @@ export default function ChatPage() {
         >
           
           {/* Scrollable messages bubble log */}
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4 max-h-[460px] custom-scrollbar">
+          <div className="flex-1 overflow-y-auto space-y-4 max-h-[460px] no-scrollbar">
             
             {messages.length === 0 ? (
               

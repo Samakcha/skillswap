@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-// @ts-ignore
 import { SplitText as GSAPSplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
 
@@ -50,7 +49,7 @@ const SplitText = ({
 
   useEffect(() => {
     if (document.fonts.status === 'loaded') {
-      setFontsLoaded(true);
+      queueMicrotask(() => setFontsLoaded(true));
     } else {
       document.fonts.ready.then(() => {
         setFontsLoaded(true);

@@ -2,11 +2,11 @@
 
 import { createClient } from '@/lib/supabase'
 import SplitText from '@/components/SplitText'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Layers, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, ArrowRight, MapPin, ShieldCheck, Clock, CheckCircle } from 'lucide-react'
+import { Layers, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react'
 import CardSwap from '@/components/CardSwap'
 
 // Framer Motion Animation Presets
@@ -38,20 +38,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [signupSuccess, setSignupSuccess] = useState(false)
+  const [signupSuccess, setSignupSuccess] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('signup_success') === 'true'
+  })
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [redirectMessage, setRedirectMessage] = useState('Connecting handshake...')
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('signup_success') === 'true') {
-        setSignupSuccess(true)
-      }
-    }
-  }, [])
-
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (!event.origin.includes('vimeo.com')) return
