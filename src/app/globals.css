@@ -139,6 +139,21 @@ body,
   transform: skewY(2deg);
 }
 
+/* Make absolute background iframe behave like object-fit: cover across all viewports (mobile + desktop) */
+.vimeo-background-iframe {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 100vw !important;
+  height: 56.25vw !important; /* 16:9 ratio basis: 100 * 9 / 16 */
+  min-height: 100vh !important;
+  min-width: 177.77vh !important; /* 16:9 ratio basis: 100 * 16 / 9 */
+  transform: translate(-50%, -50%) scale(1.15) !important;
+  pointer-events: none !important;
+}
+
+
+
 /* Float up heart keyframe animations */
 @keyframes float-up {
   0% {

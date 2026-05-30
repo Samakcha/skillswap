@@ -125,9 +125,10 @@ export default function LoginPage() {
         <iframe
           src={BACKGROUND_VIDEO_SRC}
           onLoad={() => setIsVideoLoaded(true)}
-          className={`absolute inset-0 w-full h-full grayscale contrast-125 pointer-events-none scale-110 transition-opacity duration-1000 ${
+          className={`vimeo-background-iframe grayscale contrast-125 transition-opacity duration-1000 ${
             isVideoLoaded ? 'opacity-15' : 'opacity-0'
           }`}
+
           frameBorder="0"
           allow="autoplay; fullscreen"
         />
