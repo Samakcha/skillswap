@@ -52,30 +52,21 @@ export default function ProfileSetupPage() {
   // Background video playback lifecycle (Autoplay recovery & 10s Rewind)
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
-
-    const startVideo = () => {
-      video.play().catch(() => {})
-    }
-
-    video.play().catch(() => {
-      window.addEventListener('click', startVideo, { once: true })
-      window.addEventListener('touchstart', startVideo, { once: true })
-    })
-
-    const handleTimeUpdate = () => {
-      if (video.currentTime >= 10) {
-        video.currentTime = 0
+    if (video) {
+      const startVideo = () => {
         video.play().catch(() => {})
       }
-    }
+      
+      video.play().catch(() => {
+        // Fallback for strict browser policies: listen to first user interaction to start playing
+        window.addEventListener('click', startVideo, { once: true })
+        window.addEventListener('touchstart', startVideo, { once: true })
+      })
 
-    video.addEventListener('timeupdate', handleTimeUpdate)
-
-    return () => {
-      window.removeEventListener('click', startVideo)
-      window.removeEventListener('touchstart', startVideo)
-      video.removeEventListener('timeupdate', handleTimeUpdate)
+      return () => {
+        window.removeEventListener('click', startVideo)
+        window.removeEventListener('touchstart', startVideo)
+      }
     }
   }, [])
 

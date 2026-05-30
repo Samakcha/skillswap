@@ -25,6 +25,7 @@ export default function Home() {
   const [dbMessage, setDbMessage] = useState("")
   
   const [highlightServices, setHighlightServices] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -34,28 +35,18 @@ export default function Home() {
     const video = videoRef.current;
     if (video) {
       const startVideo = () => {
-        video.play().catch(() => {});
+        video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
       };
       
-      video.play().catch(() => {
+      video.play().then(() => setIsVideoPlaying(true)).catch(() => {
         // Fallback for strict browser policies: listen to first user interaction to start playing
         window.addEventListener('click', startVideo, { once: true });
         window.addEventListener('touchstart', startVideo, { once: true });
       });
 
-      const handleTimeUpdate = () => {
-        if (video.currentTime >= 10) {
-          video.currentTime = 0;
-          video.play().catch(() => {});
-        }
-      };
-
-      video.addEventListener('timeupdate', handleTimeUpdate);
-
       return () => {
         window.removeEventListener('click', startVideo);
         window.removeEventListener('touchstart', startVideo);
-        video.removeEventListener('timeupdate', handleTimeUpdate);
       };
     }
   }, []);
@@ -206,14 +197,18 @@ export default function Home() {
         >
           <video
             ref={videoRef}
+            src={BACKGROUND_VIDEO_SRC}
             autoPlay
             muted
             loop
             playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-25 grayscale contrast-125"
-          >
-            <source src={BACKGROUND_VIDEO_SRC} type="video/mp4" />
-          </video>
+            preload="auto"
+            onPlaying={() => setIsVideoPlaying(true)}
+            onCanPlay={() => setIsVideoPlaying(true)}
+            className={`absolute inset-0 w-full h-full object-cover grayscale contrast-125 transition-opacity duration-1000 ${
+              isVideoPlaying ? 'opacity-25' : 'opacity-0'
+            }`}
+          />
           <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color pointer-events-none" />
         </motion.div>
 
