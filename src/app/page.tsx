@@ -10,6 +10,7 @@ import InteractiveSimulator from "@/components/InteractiveSimulator"
 import CardSwap from "@/components/CardSwap"
 import SplitText from "@/components/SplitText"
 import TextType from "@/components/TextType"
+import BackgroundLiquidEther from "@/components/BackgroundLiquidEther"
 
 
 const SERVICES = [
@@ -20,14 +21,11 @@ const SERVICES = [
   { index: "05", title: "WELLNESS & BODY", tags: ["VINYASA YOGA", "MINDFULNESS MEDITATION", "NUTRITION", "PILATES"] }
 ]
 
-const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&muted=1&playsinline=1&controls=0&badge=0&byline=0&portrait=0&title=0&transparent=1&dnt=1&api=1'
-
 export default function Home() {
   const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "table_missing" | "error">("checking")
   const [dbMessage, setDbMessage] = useState("")
   
   const [highlightServices, setHighlightServices] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   // Smooth scroll springs to avoid raw scroll reading jitters
   const { scrollY, scrollYProgress } = useScroll();
@@ -118,32 +116,6 @@ export default function Home() {
     checkDatabase()
   }, [])
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (!event.origin.includes('vimeo.com')) return
-      try {
-        const data = JSON.parse(event.data)
-        if (data.event === 'play' || data.event === 'playing') {
-          setIsVideoLoaded(true)
-        }
-      } catch (e) {
-        // Safe to ignore non-JSON messages
-      }
-    }
-    
-    window.addEventListener('message', handleMessage)
-    
-    // Fallback safety timeout (2 seconds)
-    const fallbackTimer = setTimeout(() => {
-      setIsVideoLoaded(true)
-    }, 2000)
-    
-    return () => {
-      window.removeEventListener('message', handleMessage)
-      clearTimeout(fallbackTimer)
-    }
-  }, [])
-
   return (
     <div className="landing-page-root min-h-screen bg-[#FF4D00] text-black flex flex-col font-sans selection:bg-black selection:text-[#FF4D00] relative overflow-x-hidden">
       
@@ -196,23 +168,12 @@ export default function Home() {
       {/* 2. TYPOGRAPHIC HERO SECTION */}
       <section className="relative min-h-screen flex items-center justify-center pt-32 px-6 w-full z-10 overflow-hidden bg-[#FF4D00]">
         
-        {/* Full-width Background Video element with Parallax Scroll */}
+        {/* Full-width LiquidEther background with Parallax Scroll */}
         <motion.div 
           className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none"
           style={{ y: videoY }}
         >
-
-          <iframe
-            src={BACKGROUND_VIDEO_SRC}
-            onLoad={() => setIsVideoLoaded(true)}
-            className={`vimeo-background-iframe grayscale contrast-125 transition-opacity duration-1000 ${
-              isVideoLoaded ? 'opacity-25' : 'opacity-0'
-            }`}
-            frameBorder="0"
-            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          />
-
-
+          <BackgroundLiquidEther intensity="hero" />
           <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color pointer-events-none" />
         </motion.div>
 

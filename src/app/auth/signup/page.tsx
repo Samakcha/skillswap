@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Layers, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import CardSwap from '@/components/CardSwap'
+import BackgroundLiquidEther from '@/components/BackgroundLiquidEther'
 
 // Framer Motion Animation Presets
 const FADE_UP = {
@@ -25,8 +26,6 @@ const CONTAINER_STAGGER = {
     }
   }
 }
-
-const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&muted=1&playsinline=1&controls=0&badge=0&byline=0&portrait=0&title=0&transparent=1&dnt=1&api=1'
 
 export default function SignUpPage() {
   const supabase = createClient()
@@ -124,21 +123,9 @@ export default function SignUpPage() {
   return (
     <main className="min-h-screen bg-[#070709] text-white flex items-center justify-center p-4 sm:p-6 md:p-8 font-sans selection:bg-[#FF4D00] selection:text-black relative overflow-hidden">
       
-      {/* 0. Full-width Immersive Background Video with Autoplay Recovery & 10s Rewind */}
+      {/* 0. Full-width immersive LiquidEther background */}
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none select-none">
-        <iframe
-          src={BACKGROUND_VIDEO_SRC}
-          onLoad={() => setIsVideoLoaded(true)}
-          className={`vimeo-background-iframe grayscale contrast-125 transition-opacity duration-1000 ${
-            isVideoLoaded ? 'opacity-15' : 'opacity-0'
-          }`}
-
-          frameBorder="0"
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-        />
-
-
-        {/* Color overlay matching landing page tinting */}
+        <BackgroundLiquidEther />
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>
 

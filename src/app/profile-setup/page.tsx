@@ -7,8 +7,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, AlertCircle, ArrowLeft, Camera, Layers } from 'lucide-react'
-
-const BACKGROUND_VIDEO_SRC = 'https://player.vimeo.com/video/1196908707?h=fed589ba2b&autoplay=1&loop=1&muted=1&playsinline=1&controls=0&badge=0&byline=0&portrait=0&title=0&transparent=1&dnt=1&api=1'
+import BackgroundLiquidEther from '@/components/BackgroundLiquidEther'
 
 // Framer Motion Animation Presets
 const FADE_UP = {
@@ -48,36 +47,6 @@ export default function ProfileSetupPage() {
   
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (!event.origin.includes('vimeo.com')) return
-      try {
-        const data = JSON.parse(event.data)
-        if (data.event === 'play' || data.event === 'playing') {
-          setIsVideoLoaded(true)
-        }
-      } catch (e) {
-        // Safe to ignore non-JSON messages
-      }
-    }
-    
-    window.addEventListener('message', handleMessage)
-    
-    // Fallback safety timeout (2 seconds)
-    const fallbackTimer = setTimeout(() => {
-      setIsVideoLoaded(true)
-    }, 2000)
-    
-    return () => {
-      window.removeEventListener('message', handleMessage)
-      clearTimeout(fallbackTimer)
-    }
-  }, [])
-
-
-
 
   // Safe client-side fetch of Supabase metadata on mount
   useEffect(() => {
@@ -229,21 +198,9 @@ export default function ProfileSetupPage() {
   return (
     <main className="min-h-screen bg-[#070709] text-white flex items-center justify-center p-4 sm:p-6 md:p-8 font-sans selection:bg-[#FF4D00] selection:text-black relative overflow-hidden">
       
-      {/* 0. Full-width Immersive Background Video with Autoplay Recovery & 10s Rewind */}
+      {/* 0. Full-width immersive LiquidEther background */}
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none select-none">
-        <iframe
-          src={BACKGROUND_VIDEO_SRC}
-          onLoad={() => setIsVideoLoaded(true)}
-          className={`vimeo-background-iframe grayscale contrast-125 transition-opacity duration-1000 ${
-            isVideoLoaded ? 'opacity-15' : 'opacity-0'
-          }`}
-
-          frameBorder="0"
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-        />
-
-
-        {/* Color overlay matching landing page tinting */}
+        <BackgroundLiquidEther />
         <div className="absolute inset-0 bg-[#FF4D00] mix-blend-color opacity-30 pointer-events-none" />
       </div>
 
