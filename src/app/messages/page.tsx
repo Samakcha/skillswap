@@ -73,6 +73,24 @@ export default function MessagesPage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [selectedConvoIds, setSelectedConvoIds] = useState<Set<string>>(new Set())
+  const [isLight, setIsLight] = useState(false)
+
+  // Real-time MutationObserver to sync system and manual theme toggles dynamically
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    setIsLight(document.documentElement.classList.contains('light'))
+
+    const observer = new MutationObserver(() => {
+      setIsLight(document.documentElement.classList.contains('light'))
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
 
   async function loadConversations(currentUserObj?: any) {
@@ -377,10 +395,10 @@ export default function MessagesPage() {
             </div>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h1 className="font-display font-black text-3xl sm:text-4xl leading-[0.9] text-white tracking-tight uppercase flex flex-wrap gap-x-2">
+              <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[0.9] text-white tracking-tight uppercase flex flex-col gap-2">
                 <SplitText
                   text="Direct"
-                  className="text-white"
+                  className="text-white inline-block"
                   delay={40}
                   duration={0.6}
                   ease="power3.out"
@@ -389,7 +407,7 @@ export default function MessagesPage() {
                 />
                 <SplitText
                   text="Messages"
-                  className="text-[#FF4D00]"
+                  className="text-[#FF4D00] inline-block"
                   delay={40}
                   duration={0.6}
                   ease="power3.out"
@@ -463,18 +481,52 @@ export default function MessagesPage() {
                   const hasUnread = convo.unreadCount > 0
                   const isSelected = selectedConvoIds.has(convo.id)
                   
+                  const cardBgClass = isLight
+                    ? isSelected
+                      ? 'border-[#FF4D00] bg-[#121216]'
+                      : hasUnread 
+                        ? 'border-[#FF4D00] bg-[#0E0E12] border-l-8 border-l-[#FF4D00]' 
+                        : 'bg-[#0B0B0D] border-white/5 hover:border-[#FF4D00]'
+                    : isSelected
+                      ? 'border-[#FF4D00] bg-[#FFF5EE]'
+                      : hasUnread
+                        ? 'border-[#FF4D00] bg-white border-l-8 border-l-[#FF4D00] border-y-2 border-r-2 border-black'
+                        : 'bg-[#FFFCF9] border-black hover:border-[#FF4D00]'
+
+                  const cardShadowClass = isLight
+                    ? 'shadow-[6px_6px_0px_#000000] hover:shadow-[6px_6px_0px_rgba(255,77,0,0.15)]'
+                    : 'shadow-[6px_6px_0px_#FF4D00] hover:shadow-none'
+
+                  const nameColorClass = isLight ? 'text-white' : 'text-black'
+                  const msgColorClass = isLight 
+                    ? hasUnread ? 'text-white' : 'text-gray-400'
+                    : hasUnread ? 'text-black' : 'text-gray-700'
+                  const timeColorClass = isLight ? 'text-white/30' : 'text-black/40'
+                  
+                  const badgeClass = isLight
+                    ? 'bg-white/5 border border-white/10 text-white/50'
+                    : 'bg-black/5 border border-black/10 text-black/55'
+                    
+                  const avatarClass = hasUnread
+                    ? 'bg-[#FF4D00] border-black text-black font-black'
+                    : isLight
+                      ? 'bg-white/5 border-white/15 text-white'
+                      : 'bg-black/5 border-black/15 text-black'
+                      
+                  const checkboxClass = isLight
+                    ? 'bg-black/40 border border-white/10 hover:border-[#FF4D00]/50 text-gray-500 hover:text-white'
+                    : 'bg-black/5 border border-black/10 hover:border-[#FF4D00]/50 text-black/30 hover:text-black'
+                    
+                  const arrowBtnClass = isLight
+                    ? 'bg-white/5 border border-white/10 text-white/40 group-hover:text-black group-hover:bg-[#FF4D00] group-hover:border-black'
+                    : 'bg-black/5 border border-black/10 text-black/40 group-hover:text-white group-hover:bg-[#FF4D00] group-hover:border-black'
+                  
                   return (
                     <motion.div
                       key={convo.id}
                       variants={FADE_UP}
                       onClick={() => router.push(`/messages/${convo.otherId}?post=${convo.postId || ''}`)}
-                      className={`rounded-2xl p-5 border-2 flex items-center justify-between cursor-pointer group transition-all duration-300 relative overflow-hidden shadow-[6px_6px_0px_#000000] hover:shadow-[6px_6px_0px_rgba(255,77,0,0.15)] hover:-translate-x-1 hover:-translate-y-1 ${
-                        isSelected
-                          ? 'border-[#FF4D00] bg-[#FF4D00]/[0.03]'
-                          : hasUnread 
-                            ? 'border-[#FF4D00] bg-[#FF4D00]/5 border-l-8 border-l-[#FF4D00]' 
-                            : 'bg-[#0B0B0D] border-white/5 hover:border-[#FF4D00]'
-                      }`}
+                      className={`rounded-2xl p-5 border-2 flex items-center justify-between cursor-pointer group transition-all duration-300 relative overflow-hidden hover:-translate-x-1 hover:-translate-y-1 ${cardBgClass} ${cardShadowClass}`}
                     >
                       {/* Left Convo Info */}
                       <div className="flex items-center gap-4 min-w-0 relative z-10">
@@ -484,30 +536,26 @@ export default function MessagesPage() {
                             e.stopPropagation() // Stop card navigation click
                             toggleSelectConvo(convo.id)
                           }}
-                          className="flex items-center justify-center p-1.5 rounded bg-black/40 hover:bg-[#FF4D00]/10 border border-white/10 hover:border-[#FF4D00]/50 cursor-pointer text-gray-500 hover:text-white transition-colors shrink-0"
+                          className={`flex items-center justify-center p-1.5 rounded cursor-pointer transition-colors shrink-0 ${checkboxClass}`}
                         >
                           {isSelected ? (
                             <CheckSquare className="w-4.5 h-4.5 text-[#FF4D00] stroke-[2.5px]" />
                           ) : (
-                            <Square className="w-4.5 h-4.5 text-white/20 hover:text-white/40" />
+                            <Square className={`w-4.5 h-4.5 ${isLight ? 'text-white/20 hover:text-white/40' : 'text-black/20 hover:text-black/40'}`} />
                           )}
                         </div>
                         
                         {/* Avatar silhouette circle */}
-                        <div className={`w-11 h-11 rounded-lg flex items-center justify-center font-mono font-bold text-sm shrink-0 border-2 transition-colors ${
-                          hasUnread
-                            ? 'bg-[#FF4D00] border-black text-black font-black'
-                            : 'bg-white/5 border-white/15 text-white'
-                        }`}>
+                        <div className={`w-11 h-11 rounded-lg flex items-center justify-center font-mono font-bold text-sm shrink-0 border-2 transition-colors ${avatarClass}`}>
                           {convo.otherName.charAt(0).toUpperCase()}
                         </div>
-
+ 
                         {/* Name & Last Message */}
                         <div className="min-w-0 space-y-2">
-                          <h3 className="font-display font-black text-base text-white group-hover:text-[#FF4D00] transition-colors leading-tight flex flex-wrap items-center gap-2 uppercase tracking-tight">
+                          <h3 className={`font-display font-black text-base group-hover:text-[#FF4D00] transition-colors leading-tight flex flex-wrap items-center gap-2 uppercase tracking-tight ${nameColorClass}`}>
                             <span>{convo.otherName}</span>
                             {convo.postTitle && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] font-mono font-bold uppercase tracking-wider text-white/50">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider ${badgeClass}`}>
                                 Swap: {convo.postTitle}
                               </span>
                             )}
@@ -515,27 +563,25 @@ export default function MessagesPage() {
                               <span className="w-2.5 h-2.5 rounded-full bg-[#FF4D00] animate-pulse" />
                             )}
                           </h3>
-                          <p className={`text-xs font-semibold leading-relaxed truncate max-w-xs sm:max-w-md ${
-                            hasUnread ? 'text-white' : 'text-gray-400'
-                          }`}>
+                          <p className={`text-xs font-semibold leading-relaxed truncate max-w-xs sm:max-w-md ${msgColorClass}`}>
                             {convo.lastMessage}
                           </p>
                         </div>
-
+ 
                       </div>
-
+ 
                       {/* Right Convo Meta & CTA */}
                       <div className="flex items-center gap-4 shrink-0 pl-3 relative z-10">
                         <div className="flex flex-col items-end gap-1.5">
-                          <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest font-bold">
+                          <span className={`text-[9px] font-mono uppercase tracking-widest font-bold ${timeColorClass}`}>
                             {formatRelativeTime(convo.created_at)}
                           </span>
                         </div>
-                        <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:text-black group-hover:bg-[#FF4D00] group-hover:border-black transition-all shadow-[2px_2px_0px_#000000] group-hover:shadow-none">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-[2px_2px_0px_#000000] group-hover:shadow-none border ${arrowBtnClass}`}>
                           <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-0.5 transition-transform stroke-[2.5px]" />
                         </div>
                       </div>
-
+ 
                     </motion.div>
                   )
                 })}

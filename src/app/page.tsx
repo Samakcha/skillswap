@@ -11,6 +11,7 @@ import CardSwap from "@/components/CardSwap"
 import SplitText from "@/components/SplitText"
 import TextType from "@/components/TextType"
 import BackgroundLiquidEther from "@/components/BackgroundLiquidEther"
+import GravityPills from "@/components/GravityPills"
 
 
 const SERVICES = [
@@ -207,16 +208,16 @@ export default function Home() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, margin: "-100px" }}
             transition={{ type: "spring", stiffness: 60, damping: 14 }}
-            className="lg:col-span-6 space-y-6 text-center lg:text-left"
+            className="lg:col-span-6 space-y-6 text-center"
           >
             <h2 className="font-display font-black text-5xl sm:text-6xl md:text-7xl uppercase tracking-tight leading-[0.88] text-black">
               SKILLS<br />NEAR YOU
             </h2>
-            <p className="font-sans text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0 font-semibold text-black/80">
+            <p className="font-sans text-sm sm:text-base leading-relaxed max-w-xl mx-auto font-semibold text-black/80">
               Discover what people in your neighborhood can teach — from cooking and coding to photography, music and more.
             </p>
             
-            <div className="pt-4 flex justify-center lg:justify-start">
+            <div className="pt-4 flex justify-center">
               <Link 
                 href="/dashboard"
                 prefetch={true}
@@ -366,7 +367,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, margin: "-100px" }}
             transition={{ type: "spring", stiffness: 60, damping: 14 }}
-            className="mb-24 space-y-4 text-center md:text-left"
+            className="mb-24 space-y-4 text-center"
           >
             <span className="font-mono text-xs font-bold text-white border-2 border-white px-4 py-2 rounded-full uppercase tracking-wider bg-transparent">
               EXCHANGE CATEGORIES
@@ -444,7 +445,7 @@ export default function Home() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, margin: "-100px" }}
             transition={{ type: "spring", stiffness: 50, damping: 14 }}
-            className="lg:col-span-6 space-y-6 text-center lg:text-left"
+            className="lg:col-span-6 space-y-6 text-center"
           >
             <span className="inline-flex items-center gap-2 px-4 py-2 border-2 border-[#FF4D00] text-xs font-mono font-bold text-[#FF4D00] uppercase tracking-wider bg-transparent">
               <Sparkles className="w-3.5 h-3.5 animate-spin-12s" />
@@ -454,16 +455,16 @@ export default function Home() {
               RUN A PROXIMITY<br />
               MATCH ENGINE SIMULATION.
             </h2>
-            <p className="font-sans text-sm text-gray-400 leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
+            <p className="font-sans text-sm text-gray-400 leading-relaxed max-w-xl mx-auto font-medium">
               Choose the skill you are searching for and specify the knowledge you will contribute in return. See the exact neighborhood matches calculated instantly in real-time.
             </p>
             
-            <div className="pt-4 flex flex-col sm:flex-row gap-6 justify-center lg:justify-start font-mono text-xs text-gray-500 uppercase">
-              <div className="flex items-center gap-2">
+            <div className="pt-4 flex flex-col sm:flex-row gap-6 justify-center font-mono text-xs text-gray-500 uppercase">
+              <div className="flex items-center gap-2 justify-center">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span>ACTIVE CALCULATION ENGINE</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span>NO TRANSACTION BOUNDARIES</span>
               </div>
@@ -640,9 +641,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. GIANT CTA SECTION WITH VIEWPANEL ZOOM-UPS */}
-      <section id="manifesto" className="bg-[#FF4D00] text-black py-32 px-6 border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10">
-        <div className="max-w-4xl w-full mx-auto space-y-12">
+      {/* 8. GIANT CTA SECTION WITH VIEWPANEL ZOOM-UPS & INTERACTIVE GRAVITY PILLS BACKGROUND */}
+      <section id="manifesto" className="bg-[#FF4D00] text-black py-32 px-6 border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10 overflow-hidden w-full select-none">
+        
+        {/* Interactive Gravity Physics Pills bouncing behind the text in the background */}
+        <GravityPills asBackground />
+
+        <div className="max-w-4xl w-full mx-auto space-y-12 relative z-10 pointer-events-none">
           
           <motion.h2
             initial={{ opacity: 0, y: 50 }}
@@ -675,7 +680,7 @@ export default function Home() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: false }}
             transition={{ type: "spring", stiffness: 70, damping: 12, delay: 0.25 }}
-            className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4 pointer-events-auto"
           >
             <Link 
               href="/auth/signup"
@@ -696,20 +701,18 @@ export default function Home() {
             </Link>
           </motion.div>
 
-
         </div>
       </section>
 
       {/* FOOTER SECTION */}
       <footer className="bg-[#FF4D00] text-black border-t-2 border-black py-16 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center gap-8">
           
           {/* Logo & copyright */}
-          <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+          <div className="flex flex-col items-center gap-4 text-center">
             <span className="font-display font-bold text-xl tracking-tighter uppercase text-black">
               SKILLSWAP
             </span>
-            <span className="hidden md:inline text-black/20 font-bold">|</span>
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-black/80">
               &copy; {new Date().getFullYear()} SKILLSWAP INC. PROUDLY HYPERLOCAL & MUTUAL.
             </p>
