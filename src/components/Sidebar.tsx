@@ -26,7 +26,8 @@ import {
   Award,
   ShieldAlert,
   Lightbulb,
-  Trophy
+  Trophy,
+  History
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -436,6 +437,11 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       name: 'Leaderboard',
       path: '/leaderboard',
       icon: Trophy
+    },
+    {
+      name: 'History',
+      path: '/history',
+      icon: History
     },
     {
       name: 'Settings',
