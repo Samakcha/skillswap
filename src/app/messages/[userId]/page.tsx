@@ -28,6 +28,14 @@ const FADE_UP = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }
 }
 
+const QUICK_REPLIES = [
+  { label: '👋 Greet & Sync', text: "Hi! I'd love to sync up for a swap. What days/times work best for you?" },
+  { label: '📆 Accept Time', text: "That schedule works perfectly for me. Let's lock it in!" },
+  { label: '📍 Local Meet', text: "Shall we meet up locally in the neighborhood, or would you prefer a remote session?" },
+  { label: '🙌 Thank Partner', text: "Thanks for the awesome swap session! I really appreciate your time and help." },
+  { label: '🔒 Request Close', text: "Great session! I will request to close the chat so we can leave reviews." }
+]
+
 export default function ChatPage() {
   const supabase = createClient()
   const router = useRouter()
@@ -663,6 +671,28 @@ export default function ChatPage() {
             <div className="mt-6 p-4 rounded-xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-400 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 animate-fadeIn animate-pulse shadow-[4px_4px_0px_rgba(244,63,94,0.1)]">
               <AlertCircle className="w-4.5 h-4.5 text-rose-400 shrink-0" />
               <span>Channel Blocked</span>
+            </div>
+          )}
+
+          {/* QUICK REPLY TEMPLATES */}
+          {!isChatClosed && !isBlockedByEither && messages.length === 0 && (
+            <div className="mt-6 pt-5 border-t border-white/[0.04] space-y-2">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-white/30">
+                Quick Transmission Templates
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {QUICK_REPLIES.map((reply, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setNewMessage(reply.text)}
+                    className="px-3 py-1.5 rounded-lg bg-[#121214] border border-white/10 hover:border-[#FF4D00] hover:bg-[#FF4D00]/5 text-[9px] font-mono font-bold uppercase tracking-wider text-white/60 hover:text-[#FF4D00] active:scale-[0.97] transition-all cursor-pointer select-none"
+                    title={reply.text}
+                  >
+                    {reply.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
