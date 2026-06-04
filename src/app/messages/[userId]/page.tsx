@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import SplitText from '@/components/SplitText'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -17,7 +17,9 @@ import {
   MessageSquare,
   XCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  Check,
+  CheckCheck
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
@@ -47,6 +49,31 @@ export default function ChatPage() {
   const [closeAccepted, setCloseAccepted] = useState<boolean>(false)
   const [isBlockedByEither, setIsBlockedByEither] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const markMessagesAsRead = useCallback(async (currentUser = user) => {
+    const resolvedUser = currentUser || user
+    if (!resolvedUser?.id || !otherId) return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) return
+
+      await fetch('/api/messages/read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sender_id: otherId,
+          receiver_id: resolvedUser.id,
+          post_id: postId || null
+        })
+      })
+    } catch (err) {
+      console.error('Failed to mark messages as read via API:', err)
+    }
+  }, [otherId, postId, supabase, user])
 
   useEffect(() => {
     async function loadMessages() {
@@ -157,20 +184,7 @@ export default function ChatPage() {
         setMessages(filteredList)
 
         // 3. Mark incoming messages from this user to me as read in the database
-        if (unreadMsgs.length > 0) {
-          let markQuery = (supabase.from('messages') as any)
-            .update({ is_read: true })
-            .eq('sender_id', otherId)
-            .eq('receiver_id', user.id)
-            .eq('is_read', false)
-
-          if (postId) {
-            markQuery = markQuery.eq('post_id', postId)
-          } else {
-            markQuery = markQuery.is('post_id', null)
-          }
-          await markQuery
-        }
+        await markMessagesAsRead(user)
       } catch (error) {
         console.error('Error loading chat session:', error)
       } finally {
@@ -219,15 +233,7 @@ export default function ChatPage() {
 
             // If we receive a message from otherId, mark it as read in the DB immediately
             if (msg.sender_id === otherId && msg.receiver_id === user?.id && !msg.is_read) {
-              (async () => {
-                try {
-                  await (supabase.from('messages') as any)
-                    .update({ is_read: true })
-                    .eq('id', msg.id)
-                } catch (err) {
-                  console.error('Failed to auto-mark message as read:', err)
-                }
-              })()
+              markMessagesAsRead(user)
             }
 
             // Prevent double insertion
@@ -275,7 +281,7 @@ export default function ChatPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, otherId, postId])
+  }, [user?.id, otherId, postId, markMessagesAsRead])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -581,22 +587,27 @@ export default function ChatPage() {
                     >
                       <span>{msg.content}</span>
                       
-                      {/* WhatsApp-style time & checkmarks indicator footer */}
+                      {/* WhatsApp-style time indicator footer */}
                       <div className="flex items-center justify-end gap-1.5 self-end mt-1 text-[9px] select-none opacity-80 font-mono font-bold uppercase tracking-wider">
                         <span className={isCurrentUser ? 'text-black/60' : 'text-white/30'}>
                           {new Date(msg.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })}
                         </span>
-                        {isCurrentUser && (
-                          <span className="flex items-center leading-none">
-                            {msg.is_read ? (
-                              <span className="text-black font-black text-[10px] tracking-[-2px] leading-none select-none" title="Seen">✓✓</span>
-                            ) : (
-                              <span className="text-black/40 font-black text-[10px] tracking-[-2px] leading-none select-none" title="Sent">✓✓</span>
-                            )}
+                      </div>
+                    </div>
+                    {isCurrentUser && (
+                      <div className="mt-1.5 flex items-center justify-end text-[10px] text-white/40 select-none font-mono">
+                        {msg.is_read ? (
+                          <span className="flex items-center gap-1" title="Seen">
+                            <CheckCheck className="w-3.5 h-3.5 stroke-[2.5px] text-white/50" />
+                            <span>Seen</span>
+                          </span>
+                        ) : (
+                          <span className="text-white/25" title="Sent">
+                            <Check className="w-3.5 h-3.5 stroke-[2.5px]" />
                           </span>
                         )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 )
               })
