@@ -790,6 +790,10 @@ export default function CreatePostPage() {
 
                   </motion.form>
 
+                  <div className="text-center text-[10px] font-mono text-white/30 uppercase tracking-widest mt-4 select-none">
+                    Your post will automatically expire after 30 days
+                  </div>
+
                 </motion.div>
               </div>
 

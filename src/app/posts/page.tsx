@@ -130,7 +130,15 @@ export default function MyPostsPage() {
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false })
             
-        setPosts(userPosts || [])
+        const expiryThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).getTime()
+        const nonExpiredPosts = (userPosts || []).filter((post: any) => {
+          // Hide active posts older than 30 days (expired)
+          if (post.is_active && new Date(post.created_at).getTime() < expiryThreshold) {
+            return false
+          }
+          return true
+        })
+        setPosts(nonExpiredPosts)
       } catch (error) {
         console.error('Error loading my posts:', error)
       } finally {

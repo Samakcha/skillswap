@@ -201,6 +201,7 @@ export default function UserProfilePage() {
             .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), post_media(url, type), likes(user_id)')
             .eq('user_id', targetUserId)
             .eq('is_active', true)
+            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false }) as any)
           
           if (postsRes.error) {
@@ -213,6 +214,7 @@ export default function UserProfilePage() {
             .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), likes(user_id)')
             .eq('user_id', targetUserId)
             .eq('is_active', true)
+            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false }) as any)
         }
 
@@ -955,6 +957,35 @@ export default function UserProfilePage() {
                         <p className="text-black/80 text-xs font-semibold leading-relaxed line-clamp-2 pt-1">
                           {post.description}
                         </p>
+
+                        {/* Expiry indicator */}
+                        {(() => {
+                          const createdAt = new Date(post.created_at).getTime()
+                          const expiryTime = createdAt + 30 * 24 * 60 * 60 * 1000
+                          const msLeft = expiryTime - Date.now()
+                          const daysLeft = msLeft / (24 * 60 * 60 * 1000)
+
+                          let expiryText = ''
+                          let colorClass = ''
+
+                          if (daysLeft < 1) {
+                            expiryText = 'Expires in <1 day'
+                            colorClass = 'text-red-500 font-bold'
+                          } else if (daysLeft < 3) {
+                            expiryText = `Expires in ${Math.ceil(daysLeft)} days`
+                            colorClass = 'text-[#FF4D00] font-bold'
+                          } else {
+                            expiryText = `Expires in ${Math.ceil(daysLeft)} days`
+                            colorClass = 'text-gray-500 font-medium'
+                          }
+
+                          return (
+                            <div className="text-[10px] font-mono uppercase tracking-wider pt-2.5 flex items-center gap-1.5 select-none">
+                              <Clock className={`w-3.5 h-3.5 ${colorClass}`} />
+                              <span className={colorClass}>{expiryText}</span>
+                            </div>
+                          )
+                        })()}
                       </div>
                     </div>
 
