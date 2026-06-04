@@ -39,6 +39,39 @@ const FADE_UP = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }
 }
 
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const SLOTS = [
+  { key: 'Morning', label: 'Morning' },
+  { key: 'Afternoon', label: 'Afternoon' },
+  { key: 'Evening', label: 'Evening' },
+  { key: 'Night', label: 'Night' },
+]
+
+const getSlotData = (daySlots: any[], slotKey: string) => {
+  if (!Array.isArray(daySlots)) return null
+  const found = daySlots.find((item: any) => {
+    if (typeof item === 'string') return item === slotKey
+    if (item && typeof item === 'object') return item.slot === slotKey
+    return false
+  })
+  if (!found) return null
+  if (typeof found === 'string') {
+    const defaults: Record<string, string> = {
+      Morning: '6am - 12pm',
+      Afternoon: '12pm - 6pm',
+      Evening: '6pm - 10pm',
+      Night: '10pm - 2am'
+    }
+    return { slot: slotKey, time: defaults[slotKey] || '' }
+  }
+  return found
+}
+
+const hasAvailabilitySlots = (slots: any) => {
+  if (!slots || typeof slots !== 'object') return false
+  return Object.values(slots).some((daySlots: any) => Array.isArray(daySlots) && daySlots.length > 0)
+}
+
 export default function UserProfilePage() {
   const supabase = createClient()
   const router = useRouter()
@@ -650,7 +683,7 @@ export default function UserProfilePage() {
             
             {isOwnProfile ? (
               <button
-                onClick={() => router.push('/settings')}
+                onClick={() => router.push('/profile/edit')}
                 className="px-4 py-2.5 bg-black hover:bg-[#FF4D00] text-white hover:text-black font-mono font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all border-2 border-white/10 hover:border-black shadow-[2px_2px_0px_rgba(255,77,0,0.1)] hover:shadow-none cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5 stroke-[2px]" />
@@ -811,6 +844,71 @@ export default function UserProfilePage() {
                       </span>
                     </div>
                   )}
+
+                  {/* Weekly Availability Read-Only Calendar */}
+                  <div className="pt-4 border-t border-white/[0.04] mt-4 w-full">
+                    <h3 className="text-xs font-display font-black text-white uppercase tracking-tight flex items-center gap-2 mb-3 justify-center sm:justify-start">
+                      <Calendar className="w-3.5 h-3.5 text-[#FF4D00]" />
+                      <span>Weekly Availability</span>
+                    </h3>
+                    
+                    {!hasAvailabilitySlots(viewedProfile?.availability_slots) ? (
+                      <div className="text-[10px] font-mono uppercase tracking-widest text-white/30 font-bold py-1 text-center sm:text-left">
+                        No availability set yet
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto w-full border border-white/5 rounded-xl bg-black/40 p-3 no-scrollbar">
+                        <div className="min-w-[600px]">
+                          <div className="grid grid-cols-8 gap-1.5 text-center">
+                            {/* Empty corner */}
+                            <div></div>
+                            {DAYS.map(day => (
+                              <div key={day} className="text-[9px] font-mono font-bold text-white/40 uppercase tracking-widest py-1 bg-[#09090b] border border-white/[0.02] rounded-md select-none">
+                                {day}
+                              </div>
+                            ))}
+                            {SLOTS.map(slot => (
+                              <div key={slot.key} className="contents">
+                                <div className="flex flex-col justify-center items-start text-left select-none pr-2">
+                                  {(() => {
+                                    const isRowActive = DAYS.some(day => !!getSlotData(viewedProfile?.availability_slots?.[day], slot.key))
+                                    return (
+                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wide leading-none transition-colors duration-200 ${
+                                        isRowActive ? 'text-[#FF4D00]' : 'text-white/60'
+                                      }`}>
+                                        {slot.label}
+                                      </span>
+                                    )
+                                  })()}
+                                </div>
+                                {DAYS.map(day => {
+                                  const slotData = getSlotData(viewedProfile?.availability_slots?.[day], slot.key)
+                                  const isSelected = !!slotData
+                                  return (
+                                    <div
+                                      key={`${day}-${slot.key}`}
+                                      className={`py-2 px-1 rounded-lg text-[8px] font-mono font-bold uppercase tracking-widest border select-none text-center flex flex-col justify-center items-center min-h-[46px] ${
+                                        isSelected
+                                          ? 'bg-[#FF4D00] text-white border-black shadow-[0_0_8px_rgba(255,77,0,0.2)]'
+                                          : 'bg-[#0B0B0D]/50 text-white/20 border-white/[0.03]'
+                                      }`}
+                                    >
+                                      <span className="leading-tight">{slot.label}</span>
+                                      {isSelected && (
+                                        <span className="text-[6.5px] text-white/80 font-normal lowercase tracking-wide mt-0.5 bg-black/25 px-1 py-0.5 rounded leading-none">
+                                          {slotData.time}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

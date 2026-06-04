@@ -445,7 +445,7 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
     },
     {
       name: 'Settings',
-      path: '/settings',
+      path: '/profile/edit',
       icon: Settings
     }
   ]
