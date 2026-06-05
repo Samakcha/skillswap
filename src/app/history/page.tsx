@@ -614,15 +614,15 @@ export default function HistoryPage() {
 
               {/* TABS SELECTOR */}
               <div className={`flex border-b gap-6 mb-6 transition-colors duration-300 ${
-                isLight ? 'border-black/10' : 'border-white/10'
+                isLight ? 'border-black/20' : 'border-white/10'
               }`}>
                 <button
                   onClick={() => setActiveTab('history')}
                   className={`pb-3 font-mono text-xs font-bold uppercase tracking-widest relative transition-colors duration-200 cursor-pointer ${
                     activeTab === 'history' 
-                      ? 'text-[#FF4D00]' 
+                      ? isLight ? 'text-black font-black' : 'text-[#FF4D00]' 
                       : isLight 
-                        ? 'text-black/40 hover:text-black/80' 
+                        ? 'text-black/50 hover:text-black/80' 
                         : 'text-white/40 hover:text-white/80'
                   }`}
                 >
@@ -630,7 +630,7 @@ export default function HistoryPage() {
                   {activeTab === 'history' && (
                     <motion.div 
                       layoutId="activeTabUnderline"
-                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#FF4D00]"
+                      className={`absolute bottom-0 left-0 right-0 h-[2px] ${isLight ? 'bg-black' : 'bg-[#FF4D00]'}`}
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}
@@ -639,9 +639,9 @@ export default function HistoryPage() {
                   onClick={() => setActiveTab('expired')}
                   className={`pb-3 font-mono text-xs font-bold uppercase tracking-widest relative transition-colors duration-200 cursor-pointer ${
                     activeTab === 'expired' 
-                      ? 'text-[#FF4D00]' 
+                      ? isLight ? 'text-black font-black' : 'text-[#FF4D00]' 
                       : isLight 
-                        ? 'text-black/40 hover:text-black/80' 
+                        ? 'text-black/50 hover:text-black/80' 
                         : 'text-white/40 hover:text-white/80'
                   }`}
                 >
@@ -649,7 +649,7 @@ export default function HistoryPage() {
                   {activeTab === 'expired' && (
                     <motion.div 
                       layoutId="activeTabUnderline"
-                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#FF4D00]"
+                      className={`absolute bottom-0 left-0 right-0 h-[2px] ${isLight ? 'bg-black' : 'bg-[#FF4D00]'}`}
                       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                     />
                   )}

@@ -32,7 +32,17 @@ import {
   X,
   Heart,
   Pencil,
-  Upload
+  Upload,
+  Music,
+  Laptop,
+  ChefHat,
+  Dumbbell,
+  Globe,
+  Palette,
+  Wrench,
+  GraduationCap,
+  Briefcase,
+  Leaf
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
@@ -57,6 +67,24 @@ interface OnboardingStep {
   description: string
   targetId: string
   placement: 'top' | 'bottom' | 'left' | 'right'
+}
+
+const CATEGORIES = [
+  { name: 'Music', icon: Music },
+  { name: 'Technology', icon: Laptop },
+  { name: 'Food & Cooking', icon: ChefHat },
+  { name: 'Fitness & Health', icon: Dumbbell },
+  { name: 'Languages', icon: Globe },
+  { name: 'Arts & Crafts', icon: Palette },
+  { name: 'Home & DIY', icon: Wrench },
+  { name: 'Education', icon: GraduationCap },
+  { name: 'Business & Finance', icon: Briefcase },
+  { name: 'Wellness', icon: Leaf },
+  { name: 'General', icon: Sparkles }
+]
+
+const getCategoryIcon = (catName: string) => {
+  return CATEGORIES.find(c => c.name.toLowerCase() === catName?.toLowerCase())?.icon || Sparkles;
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
@@ -133,8 +161,10 @@ export default function DashboardPage() {
   // State for interactive features
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'all' | 'offer' | 'request' | 'my_posts'>('all')
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all')
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [isLight, setIsLight] = useState(false)
 
   // View Post Modal details state
   const [selectedPost, setSelectedPost] = useState<any | null>(null)
@@ -170,6 +200,7 @@ export default function DashboardPage() {
   const [editTitle, setEditTitle] = useState('')
   const [editSkill, setEditSkill] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editCategory, setEditCategory] = useState<string>('General')
   const [editExistingMedia, setEditExistingMedia] = useState<any[]>([])
   const [editRemovedMedia, setEditRemovedMedia] = useState<any[]>([])
   const [editNewFiles, setEditNewFiles] = useState<File[]>([])
@@ -202,6 +233,23 @@ export default function DashboardPage() {
     })
   }
   
+  // Real-time MutationObserver to sync theme
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    setIsLight(document.documentElement.classList.contains('light'))
+
+    const observer = new MutationObserver(() => {
+      setIsLight(document.documentElement.classList.contains('light'))
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   // Custom event listener to restart the tour from sidebar
   useEffect(() => {
     const handleRestartTour = () => {
@@ -703,7 +751,8 @@ export default function DashboardPage() {
           type: editType,
           title: editTitle.trim(),
           skill: editSkill.trim(),
-          description: editDescription.trim()
+          description: editDescription.trim(),
+          category: editCategory
         })
         .eq('id', postId)
 
@@ -1192,7 +1241,11 @@ export default function DashboardPage() {
     if (activeTab === 'request' && postType !== 'request' && postType !== 'requesting') return false
     if (activeTab === 'my_posts' && post.user_id !== user?.id) return false
     
-    // 2. Filter by Search Query
+    // 2. Filter by Category
+    const postCategory = post.category || 'General'
+    if (selectedCategoryFilter !== 'all' && postCategory !== selectedCategoryFilter) return false
+
+    // 3. Filter by Search Query
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase()
       const titleMatch = post.title?.toLowerCase().includes(query)
@@ -1532,6 +1585,51 @@ export default function DashboardPage() {
 
         </motion.div>
 
+        {/* CATEGORY FILTER PILLS */}
+        <motion.div
+          variants={FADE_UP}
+          className="flex items-center gap-2 overflow-x-auto pb-4 pt-1 custom-scrollbar scroll-smooth w-full"
+        >
+          <button
+            onClick={() => setSelectedCategoryFilter('all')}
+            className={`px-4 py-2 rounded-full font-mono text-[10px] font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer border flex items-center gap-1.5 ${
+              selectedCategoryFilter === 'all'
+                ? isLight
+                  ? 'bg-[#FFFCF9] text-black border-2 border-black shadow-[3px_3px_0px_#000000] translate-y-[-1px] translate-x-[-1px]'
+                  : 'bg-[#FF4D00] text-black border-[#FF4D00] shadow-[0_0_10px_rgba(255,77,0,0.2)]'
+                : isLight
+                  ? 'bg-black text-white/80 border-2 border-black/30 hover:text-white hover:bg-black/90'
+                  : 'bg-black/40 text-white/60 border-white/10 hover:text-white hover:border-white/20'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>All Categories</span>
+          </button>
+          
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategoryFilter === cat.name;
+            const Icon = cat.icon;
+            return (
+              <button
+                key={cat.name}
+                onClick={() => setSelectedCategoryFilter(cat.name)}
+                className={`px-4 py-2 rounded-full font-mono text-[10px] font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer border flex items-center gap-1.5 ${
+                  isSelected
+                    ? isLight
+                      ? 'bg-[#FFFCF9] text-black border-2 border-black shadow-[3px_3px_0px_#000000] translate-y-[-1px] translate-x-[-1px]'
+                      : 'bg-[#FF4D00] text-black border-[#FF4D00] shadow-[0_0_10px_rgba(255,77,0,0.2)]'
+                    : isLight
+                      ? 'bg-black text-white/80 border-2 border-black/30 hover:text-white hover:bg-black/90'
+                      : 'bg-black/40 text-white/60 border-white/10 hover:text-white hover:border-white/20'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{cat.name}</span>
+              </button>
+            );
+          })}
+        </motion.div>
+
         {/* FEED CONTENT GRID */}
         <motion.div 
           variants={CONTAINER_STAGGER}
@@ -1604,6 +1702,7 @@ export default function DashboardPage() {
                     if (shouldHaveChatButtonId) {
                       chatButtonAssigned = true
                     }
+                    const CategoryIcon = getCategoryIcon(post.category)
 
                     return (
                       <motion.div 
@@ -1657,6 +1756,14 @@ export default function DashboardPage() {
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FF4D00]/10 border border-[#FF4D00]/20 text-[10px] font-mono font-bold uppercase text-black tracking-wider">
                             <Tag className="w-3 h-3 text-black" />
                             <span>Skill: {post.skill}</span>
+                          </div>
+
+                          {/* Category Badge */}
+                          <div className="flex pt-0.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-black/5 border border-black/10 text-[9px] font-mono font-bold uppercase text-black/70 tracking-wider">
+                              <CategoryIcon className="w-3 h-3 text-black/50" />
+                              <span>{post.category || 'General'}</span>
+                            </span>
                           </div>
 
                           {/* Description body clamped to max 2 lines */}
@@ -1740,6 +1847,7 @@ export default function DashboardPage() {
                                 setEditTitle(post.title);
                                 setEditSkill(post.skill);
                                 setEditDescription(post.description);
+                                setEditCategory(post.category || 'General');
                                 setEditExistingMedia(post.post_media || []);
                                 setEditRemovedMedia([]);
                                 setEditNewFiles([]);
@@ -1873,6 +1981,37 @@ export default function DashboardPage() {
                     >
                       Requesting a Skill
                     </button>
+                  </div>
+                </div>
+
+                {/* CATEGORY SELECTOR */}
+                <div className="space-y-2.5">
+                  <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-white/40">
+                    Category
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {CATEGORIES.map((cat) => {
+                      const isSelected = editCategory === cat.name
+                      const Icon = cat.icon
+                      return (
+                        <button
+                          key={cat.name}
+                          type="button"
+                          disabled={editLoading}
+                          onClick={() => setEditCategory(cat.name)}
+                          className={`py-2 px-3 rounded-xl border-2 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-2 disabled:opacity-50 text-center ${
+                            isSelected
+                              ? 'bg-[#FF4D00]/10 border-[#FF4D00] text-white shadow-[0_0_12px_rgba(255,77,0,0.15)]'
+                              : 'bg-black border-white/10 text-white/40 hover:border-white/20 font-bold'
+                          }`}
+                        >
+                          <Icon className="w-4.5 h-4.5 shrink-0" />
+                          <span className="font-mono font-bold text-[8.5px] uppercase tracking-wider leading-tight">
+                            {cat.name}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -2310,6 +2449,7 @@ export default function DashboardPage() {
                           setEditTitle(selectedPost.title);
                           setEditSkill(selectedPost.skill);
                           setEditDescription(selectedPost.description);
+                          setEditCategory(selectedPost.category || 'General');
                           setEditExistingMedia(selectedPost.post_media || []);
                           setEditRemovedMedia([]);
                           setEditNewFiles([]);

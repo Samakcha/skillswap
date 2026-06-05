@@ -30,13 +30,41 @@ import {
   Heart,
   X,
   Trash2,
-  Check
+  Check,
+  Music,
+  Laptop,
+  ChefHat,
+  Dumbbell,
+  Globe,
+  Palette,
+  Wrench,
+  GraduationCap,
+  Briefcase,
+  Leaf
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
 const FADE_UP = {
   hidden: { opacity: 0, y: 15 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }
+}
+
+const CATEGORIES = [
+  { name: 'Music', icon: Music },
+  { name: 'Technology', icon: Laptop },
+  { name: 'Food & Cooking', icon: ChefHat },
+  { name: 'Fitness & Health', icon: Dumbbell },
+  { name: 'Languages', icon: Globe },
+  { name: 'Arts & Crafts', icon: Palette },
+  { name: 'Home & DIY', icon: Wrench },
+  { name: 'Education', icon: GraduationCap },
+  { name: 'Business & Finance', icon: Briefcase },
+  { name: 'Wellness', icon: Leaf },
+  { name: 'General', icon: Sparkles }
+]
+
+const getCategoryIcon = (catName: string) => {
+  return CATEGORIES.find(c => c.name.toLowerCase() === catName?.toLowerCase())?.icon || Sparkles;
 }
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -595,6 +623,17 @@ export default function UserProfilePage() {
 
   const isOwnProfile = currentUser?.id === targetUserId
 
+  // Group viewedPosts by category, defaulting null/empty to 'General'
+  const groupedPosts = viewedPosts.reduce((groups: Record<string, any[]>, post) => {
+    const cat = post.category || 'General';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(post);
+    return groups;
+  }, {});
+
+  // Get sorted category names alphabetically (A-Z)
+  const sortedCategories = Object.keys(groupedPosts).sort((a, b) => a.localeCompare(b));
+
   return (
     <AnimatePresence mode="wait">
       {loading ? (
@@ -1008,120 +1047,153 @@ export default function UserProfilePage() {
 
             ) : (
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {viewedPosts.map((post) => (
-                  <div 
-                    key={post.id}
-                    className="rounded-[1.5rem] p-6 border-2 bg-[#FFFCF9] border-black hover:border-[#FF4D00] flex flex-col justify-between group transition-all duration-300 relative overflow-hidden shadow-[6px_6px_0px_#000000] hover:shadow-[6px_6px_0px_#FF4D00] hover:-translate-x-1 hover:-translate-y-1"
-                  >
-                    <div className="space-y-4 relative z-10">
-                      <div className="flex items-center justify-between">
-                        {post.type === 'offer' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-800 border border-emerald-500/35 text-[9px] font-mono font-bold uppercase tracking-widest">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                            Offering
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FF4D00]/10 text-black border border-[#FF4D00]/25 text-[9px] font-mono font-bold uppercase tracking-widest">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#FF4D00] animate-pulse shrink-0" />
-                            Requesting
-                          </span>
-                        )}
-
-                        {/* Created date display & Like count display-only badge */}
-                        <div className="flex items-center gap-2 relative z-20">
-                          <div className="flex items-center gap-1 text-[9px] font-mono text-black/40 uppercase tracking-wider font-bold">
-                            <Clock className="w-3.5 h-3.5 text-black/30" />
-                            <span>{formatDate(post.created_at)}</span>
-                          </div>
-
-                          <div className="flex items-center gap-1 px-2.5 py-0.5 border border-black/10 rounded-full font-mono text-[9px] font-bold bg-white text-black">
-                            <Heart className={`w-3 h-3 transition-colors ${post.has_liked ? 'fill-pink-500 text-pink-500' : 'text-pink-500'}`} />
-                            <span>{post.like_count || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 pt-1">
-                        <h3 className="font-display font-black text-lg text-black group-hover:text-[#FF4D00] transition-colors leading-snug truncate uppercase tracking-tight">
-                          {post.title}
+              <div className="space-y-10">
+                {sortedCategories.map((catName) => {
+                  const postsInCategory = groupedPosts[catName]
+                  const CategoryHeaderIcon = getCategoryIcon(catName)
+                  return (
+                    <div key={catName} className="space-y-4">
+                      {/* Category Heading Header */}
+                      <div className="flex items-center gap-2.5 border-b border-white/[0.06] pb-2">
+                        <CategoryHeaderIcon className="w-5 h-5 text-[#FF4D00] select-none" />
+                        <h3 className="font-display font-black text-sm text-white uppercase tracking-tight">
+                          {catName}
                         </h3>
-
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FF4D00]/10 border border-[#FF4D00]/20 text-[10px] font-mono font-black uppercase text-black tracking-wider">
-                          <Tag className="w-3 h-3 text-black" />
-                          <span>Skill: {post.skill}</span>
-                        </div>
-
-                        <p className="text-black/80 text-xs font-semibold leading-relaxed line-clamp-2 pt-1">
-                          {post.description}
-                        </p>
-
-                        {/* Expiry indicator */}
-                        {(() => {
-                          const createdAt = new Date(post.created_at).getTime()
-                          const expiryTime = createdAt + 30 * 24 * 60 * 60 * 1000
-                          const msLeft = expiryTime - Date.now()
-                          const daysLeft = msLeft / (24 * 60 * 60 * 1000)
-
-                          let expiryText = ''
-                          let colorClass = ''
-
-                          if (daysLeft < 1) {
-                            expiryText = 'Expires in <1 day'
-                            colorClass = 'text-red-500 font-bold'
-                          } else if (daysLeft < 3) {
-                            expiryText = `Expires in ${Math.ceil(daysLeft)} days`
-                            colorClass = 'text-[#FF4D00] font-bold'
-                          } else {
-                            expiryText = `Expires in ${Math.ceil(daysLeft)} days`
-                            colorClass = 'text-gray-500 font-medium'
-                          }
-
-                          return (
-                            <div className="text-[10px] font-mono uppercase tracking-wider pt-2.5 flex items-center gap-1.5 select-none">
-                              <Clock className={`w-3.5 h-3.5 ${colorClass}`} />
-                              <span className={colorClass}>{expiryText}</span>
-                            </div>
-                          )
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Card Footer actions */}
-                    <div className="pt-4 mt-5 border-t border-black/10 flex items-center justify-between relative z-10">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {viewedProfile?.avatar_url ? (
-                          <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-black shrink-0">
-                            <img 
-                              src={viewedProfile.avatar_url} 
-                              alt="" 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-[#FF4D00] flex items-center justify-center border-2 border-black font-bold text-[10px] text-black shrink-0 uppercase shadow-inner">
-                            {viewedProfile?.full_name?.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <span className="text-[10px] font-display font-black uppercase text-black truncate max-w-[120px]">
-                          {viewedProfile?.full_name}
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] font-mono font-bold text-white/40 uppercase tracking-widest">
+                          {postsInCategory.length} slot{postsInCategory.length !== 1 ? 's' : ''}
                         </span>
                       </div>
 
-                      {/* View Post Button */}
-                      <div className="shrink-0 pl-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPost(post)}
-                          className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-black hover:bg-[#FF4D00] hover:text-black text-white border border-white/10 hover:border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] cursor-pointer"
-                        >
-                          <span>View Post</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
+                      {/* Grid for this category */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {postsInCategory.map((post) => {
+                          const CategoryIcon = getCategoryIcon(post.category)
+                          return (
+                            <div 
+                              key={post.id}
+                              className="rounded-[1.5rem] p-6 border-2 bg-[#FFFCF9] border-black hover:border-[#FF4D00] flex flex-col justify-between group transition-all duration-300 relative overflow-hidden shadow-[6px_6px_0px_#000000] hover:shadow-[6px_6px_0px_#FF4D00] hover:-translate-x-1 hover:-translate-y-1"
+                            >
+                              <div className="space-y-4 relative z-10">
+                                <div className="flex items-center justify-between">
+                                  {post.type === 'offer' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-800 border border-emerald-500/35 text-[9px] font-mono font-bold uppercase tracking-widest">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                      Offering
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FF4D00]/10 text-black border border-[#FF4D00]/25 text-[9px] font-mono font-bold uppercase tracking-widest">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF4D00] animate-pulse shrink-0" />
+                                      Requesting
+                                    </span>
+                                  )}
+
+                                  {/* Created date display & Like count display-only badge */}
+                                  <div className="flex items-center gap-2 relative z-20">
+                                    <div className="flex items-center gap-1 text-[9px] font-mono text-black/40 uppercase tracking-wider font-bold">
+                                      <Clock className="w-3.5 h-3.5 text-black/30" />
+                                      <span>{formatDate(post.created_at)}</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 px-2.5 py-0.5 border border-black/10 rounded-full font-mono text-[9px] font-bold bg-white text-black">
+                                      <Heart className={`w-3.5 h-3.5 transition-colors ${post.has_liked ? 'fill-pink-500 text-pink-500' : 'text-pink-500'}`} />
+                                      <span>{post.like_count || 0}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3 pt-1">
+                                  <h3 className="font-display font-black text-lg text-black group-hover:text-[#FF4D00] transition-colors leading-snug truncate uppercase tracking-tight">
+                                    {post.title}
+                                  </h3>
+
+                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FF4D00]/10 border border-[#FF4D00]/20 text-[10px] font-mono font-black uppercase text-black tracking-wider">
+                                    <Tag className="w-3 h-3 text-black" />
+                                    <span>Skill: {post.skill}</span>
+                                  </div>
+
+                                  {/* Category Badge */}
+                                  <div className="flex pt-0.5">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-black/5 border border-black/10 text-[9px] font-mono font-bold uppercase text-black/70 tracking-wider">
+                                      <CategoryIcon className="w-3 h-3 text-black/50" />
+                                      <span>{post.category || 'General'}</span>
+                                    </span>
+                                  </div>
+
+                                  <p className="text-black/80 text-xs font-semibold leading-relaxed line-clamp-2 pt-1">
+                                    {post.description}
+                                  </p>
+
+                                  {/* Expiry indicator */}
+                                  {(() => {
+                                    const createdAt = new Date(post.created_at).getTime()
+                                    const expiryTime = createdAt + 30 * 24 * 60 * 60 * 1000
+                                    const msLeft = expiryTime - Date.now()
+                                    const daysLeft = msLeft / (24 * 60 * 60 * 1000)
+
+                                    let expiryText = ''
+                                    let colorClass = ''
+
+                                    if (daysLeft < 1) {
+                                      expiryText = 'Expires in <1 day'
+                                      colorClass = 'text-red-500 font-bold'
+                                    } else if (daysLeft < 3) {
+                                      expiryText = `Expires in ${Math.ceil(daysLeft)} days`
+                                      colorClass = 'text-[#FF4D00] font-bold'
+                                    } else {
+                                      expiryText = `Expires in ${Math.ceil(daysLeft)} days`
+                                      colorClass = 'text-gray-500 font-medium'
+                                    }
+
+                                    return (
+                                      <div className="text-[10px] font-mono uppercase tracking-wider pt-2.5 flex items-center gap-1.5 select-none">
+                                        <Clock className={`w-3.5 h-3.5 ${colorClass}`} />
+                                        <span className={colorClass}>{expiryText}</span>
+                                      </div>
+                                    )
+                                  })()}
+                                </div>
+                              </div>
+
+                              {/* Card Footer actions */}
+                              <div className="pt-4 mt-5 border-t border-black/10 flex items-center justify-between relative z-10">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  {viewedProfile?.avatar_url ? (
+                                    <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-black shrink-0">
+                                      <img 
+                                        src={viewedProfile.avatar_url} 
+                                        alt="" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-[#FF4D00] flex items-center justify-center border-2 border-black font-bold text-[10px] text-black shrink-0 uppercase shadow-inner">
+                                      {viewedProfile?.full_name?.charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <span className="text-[10px] font-display font-black uppercase text-black truncate max-w-[120px]">
+                                    {viewedProfile?.full_name}
+                                  </span>
+                                </div>
+
+                                {/* View Post Button */}
+                                <div className="shrink-0 pl-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedPost(post)}
+                                    className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-black hover:bg-[#FF4D00] hover:text-black text-white border border-white/10 hover:border-black font-mono font-black text-[10px] uppercase tracking-wider transition-all shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] cursor-pointer"
+                                  >
+                                    <span>View Post</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
             )}

@@ -18,7 +18,17 @@ import {
   Upload,
   X,
   FileVideo,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Music,
+  Laptop,
+  ChefHat,
+  Dumbbell,
+  Globe,
+  Palette,
+  Wrench,
+  GraduationCap,
+  Briefcase,
+  Leaf
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
@@ -38,6 +48,20 @@ const CONTAINER_STAGGER = {
   }
 }
 
+const CATEGORIES = [
+  { name: 'Music', icon: Music },
+  { name: 'Technology', icon: Laptop },
+  { name: 'Food & Cooking', icon: ChefHat },
+  { name: 'Fitness & Health', icon: Dumbbell },
+  { name: 'Languages', icon: Globe },
+  { name: 'Arts & Crafts', icon: Palette },
+  { name: 'Home & DIY', icon: Wrench },
+  { name: 'Education', icon: GraduationCap },
+  { name: 'Business & Finance', icon: Briefcase },
+  { name: 'Wellness', icon: Leaf },
+  { name: 'General', icon: Sparkles }
+]
+
 export default function CreatePostPage() {
   const supabase = createClient()
   const router = useRouter()
@@ -45,6 +69,7 @@ export default function CreatePostPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [skill, setSkill] = useState('')
+  const [category, setCategory] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   
@@ -184,8 +209,8 @@ export default function CreatePostPage() {
   async function handleSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault()
     
-    if (!title.trim() || !skill.trim() || !description.trim()) {
-      setError('Please fill in all required fields.')
+    if (!title.trim() || !skill.trim() || !description.trim() || !category) {
+      setError('Please fill in all required fields and select a category.')
       return
     }
 
@@ -206,6 +231,7 @@ export default function CreatePostPage() {
         title: title.trim(),
         description: description.trim(),
         skill: skill.trim(),
+        category,
       }).select().single()
 
       if (postError) {
@@ -538,6 +564,37 @@ export default function CreatePostPage() {
                           Request a Skill
                         </button>
 
+                      </div>
+                    </div>
+
+                    {/* Category Selector Grid */}
+                    <div className="space-y-2.5">
+                      <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-white/40">
+                        Category <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {CATEGORIES.map((cat) => {
+                          const isSelected = category === cat.name;
+                          const Icon = cat.icon;
+                          return (
+                            <button
+                              key={cat.name}
+                              type="button"
+                              disabled={loading}
+                              onClick={() => setCategory(cat.name)}
+                              className={`py-3 px-4 rounded-xl border-2 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-2 disabled:opacity-50 text-center ${
+                                isSelected
+                                  ? 'bg-[#FF4D00]/10 border-[#FF4D00] text-white shadow-[0_0_12px_rgba(255,77,0,0.15)]'
+                                  : 'bg-[#09090b] text-white/50 border-white/10 hover:text-white hover:border-white/20'
+                              }`}
+                            >
+                              <Icon className="w-5 h-5 shrink-0" />
+                              <span className="font-mono font-black text-[9px] uppercase tracking-widest leading-tight">
+                                {cat.name}
+                              </span>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
 

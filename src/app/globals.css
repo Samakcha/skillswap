@@ -221,6 +221,11 @@ body,
   /* Post Card Shadow - Subtle Glowing Orange */
   --post-shadow: 6px 6px 0px #FF4D00;
   --post-border: rgba(255, 255, 255, 0.08);
+
+  /* Scrollbar custom variables */
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: #FF4D00;
+  --scrollbar-thumb-hover: #ff6a26;
 }
 
 .light {
@@ -235,6 +240,11 @@ body,
   /* Post Card Shadow - High Contrast Brutalist Black */
   --post-shadow: 6px 6px 0px #000000;
   --post-border: #000000;
+
+  /* Scrollbar custom variables - Brutalist Contrast */
+  --scrollbar-track: rgba(0, 0, 0, 0.08);
+  --scrollbar-thumb: #000000;
+  --scrollbar-thumb-hover: #1c1c1e;
 }
 
 .bg-theme-bg {
@@ -286,4 +296,29 @@ h6 {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;             /* Chrome / Safari / Opera */
+}
+
+/* Sleek custom scrollbar style */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px; /* Horizontal scrollbar height */
+  width: 6px;  /* Vertical scrollbar width */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
