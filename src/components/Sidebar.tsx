@@ -27,7 +27,8 @@ import {
   ShieldAlert,
   Lightbulb,
   Trophy,
-  History
+  History,
+  Megaphone
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -40,16 +41,20 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('skillswap_sidebar_collapsed') === 'true'
-  })
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof document === 'undefined') return 'dark'
-    return document.documentElement.classList.contains('light') ? 'light' : 'dark'
-  })
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [isHovered, setIsHovered] = useState(false)
+
+  // Sync theme and collapse state on mount to prevent SSR hydration mismatches
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsCollapsed(localStorage.getItem('skillswap_sidebar_collapsed') === 'true')
+    }
+    if (typeof document !== 'undefined') {
+      setTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark')
+    }
+  }, [])
 
   // Invite states
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
@@ -168,6 +173,8 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
         router.push(`/profile/${notif.related_user_id}`)
       } else if (notif.type === 'review') {
         router.push(`/profile/${user?.id || ''}`)
+      } else if (notif.type === 'announcement_like') {
+        router.push(`/announcements`)
       } else if (notif.related_post_id) {
         router.push(`/dashboard`) // fallback
       }
@@ -422,6 +429,11 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       name: 'All Posts',
       path: '/posts',
       icon: FileText
+    },
+    {
+      name: 'Announcements',
+      path: '/announcements',
+      icon: Megaphone
     },
     {
       name: 'Messages',
