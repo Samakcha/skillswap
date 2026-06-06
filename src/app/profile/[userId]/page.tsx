@@ -31,6 +31,7 @@ import {
   X,
   Trash2,
   Check,
+  Zap,
   Music,
   Laptop,
   ChefHat,
@@ -113,6 +114,9 @@ export default function UserProfilePage() {
   const [viewedPosts, setViewedPosts] = useState<any[]>([])
   const [viewedReviews, setViewedReviews] = useState<any[]>([])
   const [averageRating, setAverageRating] = useState<string>('0')
+  const [swapCount, setSwapCount] = useState<number>(0)
+  const [responseRateText, setResponseRateText] = useState<string>('New')
+  const [responseRateColor, setResponseRateColor] = useState<string>('neutral')
   const [loading, setLoading] = useState(true)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarError, setAvatarError] = useState('')
@@ -248,42 +252,38 @@ export default function UserProfilePage() {
 
         setIsBlocked(!!blockRes)
 
-        // 3. Fetch target user profile, active posts, and reviews in parallel
-        const profileRes = await (supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', targetUserId)
-          .single() as any)
-
-        let postsRes: any
-        try {
-          postsRes = await (supabase
-            .from('posts')
-            .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), post_media(url, type), likes(user_id)')
-            .eq('user_id', targetUserId)
-            .eq('is_active', true)
-            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-            .order('created_at', { ascending: false }) as any)
-          
-          if (postsRes.error) {
-            throw postsRes.error
+        // 3. Fetch target user profile, active posts, reviews, completed swaps count, and messages in parallel
+        const fetchPosts = async () => {
+          try {
+            const postsRes = await supabase
+              .from('posts')
+              .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), post_media(url, type), likes(user_id)')
+              .eq('user_id', targetUserId)
+              .eq('is_active', true)
+              .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+              .order('created_at', { ascending: false })
+            if (postsRes.error) throw postsRes.error
+            return postsRes
+          } catch (queryErr: any) {
+            console.warn("Post media query failed, falling back to schema without post_media:", queryErr.message || queryErr)
+            return await supabase
+              .from('posts')
+              .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), likes(user_id)')
+              .eq('user_id', targetUserId)
+              .eq('is_active', true)
+              .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+              .order('created_at', { ascending: false })
           }
-        } catch (queryErr: any) {
-          console.warn("Post media query failed, falling back to schema without post_media:", queryErr.message || queryErr)
-          postsRes = await (supabase
-            .from('posts')
-            .select('*, profiles:profiles!posts_user_id_fkey!inner(full_name, pin_code, neighborhood, avatar_url), likes(user_id)')
-            .eq('user_id', targetUserId)
-            .eq('is_active', true)
-            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-            .order('created_at', { ascending: false }) as any)
         }
 
-        const reviewsRes = await (supabase
-          .from('reviews')
-          .select('*, reviewer:profiles!reviewer_id(full_name, avatar_url)')
-          .eq('reviewed_id', targetUserId)
-          .order('created_at', { ascending: false }) as any)
+        const [profileRes, postsRes, reviewsRes, completedRes, incomingRes, outgoingRes]: any[] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', targetUserId).single(),
+          fetchPosts(),
+          supabase.from('reviews').select('*, reviewer:profiles!reviewer_id(full_name, avatar_url)').eq('reviewed_id', targetUserId).order('created_at', { ascending: false }),
+          supabase.from('posts').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId).eq('is_active', false),
+          supabase.from('messages').select('post_id, sender_id').eq('receiver_id', targetUserId),
+          supabase.from('messages').select('post_id, sender_id').eq('sender_id', targetUserId)
+        ])
 
         if (profileRes.error || !profileRes.data) {
           router.push('/dashboard')
@@ -302,6 +302,58 @@ export default function UserProfilePage() {
         const totalRating = reviewsData.reduce((acc: number, curr: any) => acc + (curr.rating || 0), 0)
         const avg = reviewsData.length > 0 ? (totalRating / reviewsData.length).toFixed(2) : '0'
         setAverageRating(avg)
+
+        // Set completed swaps count
+        setSwapCount(completedRes.count || 0)
+
+        // Calculate and set Response Rate
+        const incoming = (incomingRes.data as any[]) || []
+        const outgoing = (outgoingRes.data as any[]) || []
+        
+        if (incoming.length === 0) {
+          setResponseRateText('New')
+          setResponseRateColor('neutral')
+        } else {
+          const conversations = new Map<string, { post_id: string; sender_id: string }>()
+          incoming.forEach((msg) => {
+            if (msg.post_id && msg.sender_id) {
+              const key = `${msg.post_id}_${msg.sender_id}`
+              if (!conversations.has(key)) {
+                conversations.set(key, { post_id: msg.post_id, sender_id: msg.sender_id })
+              }
+            }
+          })
+
+          const totalConversations = conversations.size
+          if (totalConversations === 0) {
+            setResponseRateText('New')
+            setResponseRateColor('neutral')
+          } else {
+            const repliedPostIds = new Set<string>()
+            outgoing.forEach((msg) => {
+              if (msg.post_id) {
+                repliedPostIds.add(msg.post_id)
+              }
+            })
+
+            let repliedCount = 0
+            conversations.forEach((conv) => {
+              if (repliedPostIds.has(conv.post_id)) {
+                repliedCount++
+              }
+            })
+
+            const rate = Math.round((repliedCount / totalConversations) * 100)
+            setResponseRateText(`${rate}%`)
+            if (rate > 70) {
+              setResponseRateColor('green')
+            } else if (rate >= 40 && rate <= 70) {
+              setResponseRateColor('yellow')
+            } else {
+              setResponseRateColor('red')
+            }
+          }
+        }
       } catch (err) {
         console.error("Error loading profile page:", err)
       } finally {
@@ -951,28 +1003,70 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
-              {/* Middle Rating counters */}
-              <div className="flex items-center justify-center lg:justify-end gap-6 bg-[#0B0B0D] border-2 border-white/10 rounded-[1.25rem] p-4 sm:p-5 self-center lg:self-auto min-w-[240px] shadow-[4px_4px_0px_#000000] hover:shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:border-[#FF4D00]/25 transition-all">
-                <div className="text-center">
-                  <div className="flex items-center gap-1.5 justify-center">
-                    <Star className="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.35)] shrink-0" />
-                    <strong className="font-display font-black text-2xl text-white leading-none">
-                      {averageRating !== '0' ? averageRating : '0'}
-                    </strong>
+              {/* Rating and Stats counters */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-end gap-4 self-center lg:self-auto">
+                <div className="flex items-center justify-center gap-6 bg-[#0B0B0D] border-2 border-white/10 rounded-[1.25rem] p-4 sm:p-5 min-w-[240px] shadow-[4px_4px_0px_#000000] hover:shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:border-[#FF4D00]/25 transition-all">
+                  <div className="text-center">
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.35)] shrink-0" />
+                      <strong className="font-display font-black text-2xl text-white leading-none">
+                        {averageRating !== '0' ? averageRating : '0'}
+                      </strong>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-white/30 uppercase tracking-widest block mt-1.5">Average Star</span>
                   </div>
-                  <span className="text-[9px] font-mono font-bold text-white/30 uppercase tracking-widest block mt-1.5">Average Star</span>
+
+                  <div className="w-px h-8 bg-white/10" />
+
+                  <div className="text-center">
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <Award className="w-5 h-5 text-[#FF4D00] shrink-0 stroke-[2px]" />
+                      <strong className="font-display font-black text-2xl text-white leading-none">
+                        {viewedReviews.length}
+                      </strong>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-white/30 uppercase tracking-widest block mt-1.5">Reviews</span>
+                  </div>
                 </div>
 
-                <div className="w-px h-8 bg-white/10" />
-
-                <div className="text-center">
-                  <div className="flex items-center gap-1.5 justify-center">
-                    <Award className="w-5 h-5 text-[#FF4D00] shrink-0 stroke-[2px]" />
-                    <strong className="font-display font-black text-2xl text-white leading-none">
-                      {viewedReviews.length}
-                    </strong>
+                {/* Swaps Completed Card */}
+                <div className="flex items-center gap-3 bg-[#0B0B0D] border-2 border-white/10 rounded-[1.25rem] p-3.5 sm:p-4.5 min-w-[150px] shadow-[4px_4px_0px_#000000] hover:shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:border-[#FF4D00]/25 transition-all select-none">
+                  <div className="w-9 h-9 rounded-lg bg-[#FF4D00]/10 border border-[#FF4D00]/20 flex items-center justify-center text-[#FF4D00] shrink-0">
+                    <Check className="w-5 h-5 stroke-[2.5px]" />
                   </div>
-                  <span className="text-[9px] font-mono font-bold text-white/30 uppercase tracking-widest block mt-1.5">Reviews</span>
+                  <div>
+                    <strong className="block font-display font-black text-xl text-white leading-none">
+                      {swapCount}
+                    </strong>
+                    <span className="text-[8px] font-mono font-bold text-white/30 uppercase tracking-widest block mt-1.5">
+                      Swaps Completed
+                    </span>
+                  </div>
+                </div>
+
+                {/* Response Rate Card */}
+                <div className="flex items-center gap-3 bg-[#0B0B0D] border-2 border-white/10 rounded-[1.25rem] p-3.5 sm:p-4.5 min-w-[150px] shadow-[4px_4px_0px_#000000] hover:shadow-[4px_4px_0px_rgba(255,77,0,0.15)] hover:border-[#FF4D00]/25 transition-all select-none">
+                  <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+                    responseRateColor === 'green' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                    responseRateColor === 'yellow' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                    responseRateColor === 'red' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
+                    'bg-white/5 border-white/10 text-white/60'
+                  }`}>
+                    <Zap className="w-5 h-5 fill-current stroke-[1.5px]" />
+                  </div>
+                  <div>
+                    <strong className={`block font-display font-black text-xl leading-none ${
+                      responseRateColor === 'green' ? 'text-emerald-400' :
+                      responseRateColor === 'yellow' ? 'text-amber-400' :
+                      responseRateColor === 'red' ? 'text-rose-400' :
+                      'text-white'
+                    }`}>
+                      {responseRateText}
+                    </strong>
+                    <span className="text-[8px] font-mono font-bold text-white/30 uppercase tracking-widest block mt-1.5">
+                      Response Rate
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1543,6 +1637,49 @@ export default function UserProfilePage() {
                         <span>⭐</span>
                         <span>{selectedPostRating} / 5.0</span>
                         <span className="text-white/30">({selectedPostRatingCount} reviews)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="flex flex-wrap items-center gap-3 select-none">
+                  {/* Swaps Completed Card */}
+                  <div className="flex items-center gap-2 bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-xl p-2 px-3 shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
+                    <Check className="w-4 h-4 text-[#FF4D00] stroke-[2.5px] shrink-0" />
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <strong className="font-display font-black text-sm text-white leading-none">
+                          {swapCount}
+                        </strong>
+                        <span className="text-[8px] font-mono font-bold text-white/40 uppercase tracking-widest leading-none">
+                          Swaps Completed
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Response Rate Card */}
+                  <div className="flex items-center gap-2 bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-xl p-2 px-3 shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
+                    <Zap className={`w-4 h-4 fill-current shrink-0 ${
+                      responseRateColor === 'green' ? 'text-emerald-400' :
+                      responseRateColor === 'yellow' ? 'text-amber-400' :
+                      responseRateColor === 'red' ? 'text-rose-400' :
+                      'text-white/60'
+                    }`} />
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <strong className={`font-display font-black text-sm leading-none ${
+                          responseRateColor === 'green' ? 'text-emerald-400' :
+                          responseRateColor === 'yellow' ? 'text-amber-400' :
+                          responseRateColor === 'red' ? 'text-rose-400' :
+                          'text-white'
+                        }`}>
+                          {responseRateText}
+                        </strong>
+                        <span className="text-[8px] font-mono font-bold text-white/40 uppercase tracking-widest leading-none">
+                          Response Rate
+                        </span>
                       </div>
                     </div>
                   </div>

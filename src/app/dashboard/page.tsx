@@ -26,6 +26,7 @@ import {
   Tag,
   Trash2,
   Check,
+  Zap,
   Flag,
   Loader2,
   Award,
@@ -170,6 +171,9 @@ export default function DashboardPage() {
   const [selectedPost, setSelectedPost] = useState<any | null>(null)
   const [selectedPostRating, setSelectedPostRating] = useState<string>('0')
   const [selectedPostRatingCount, setSelectedPostRatingCount] = useState<number>(0)
+  const [selectedPostSwapCount, setSelectedPostSwapCount] = useState<number | null>(null)
+  const [selectedPostResponseRateText, setSelectedPostResponseRateText] = useState<string | null>(null)
+  const [selectedPostResponseRateColor, setSelectedPostResponseRateColor] = useState<string | null>(null)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
 
   // Onboarding Walkthrough State
@@ -441,23 +445,49 @@ export default function DashboardPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // Fetch post owner's average rating when modal is opened
+  // Fetch post owner's average rating and stats when modal is opened
   useEffect(() => {
     if (!selectedPost) {
       queueMicrotask(() => {
         setSelectedPostRating('0')
         setSelectedPostRatingCount(0)
+        setSelectedPostSwapCount(null)
+        setSelectedPostResponseRateText(null)
+        setSelectedPostResponseRateColor(null)
       })
       return
     }
 
-    async function loadPostOwnerRating() {
-      try {
-        const { data: reviewsData } = await supabase
-          .from('reviews')
-          .select('rating')
-          .eq('receiver_id', selectedPost.user_id)
+    // Reset stats to loading state immediately to prevent stale values flashing
+    setSelectedPostSwapCount(null)
+    setSelectedPostResponseRateText(null)
+    setSelectedPostResponseRateColor(null)
 
+    async function loadPostOwnerRatingAndStats() {
+      const targetUserId = selectedPost.user_id
+      try {
+        const [reviewsRes, completedRes, incomingRes, outgoingRes]: any[] = await Promise.all([
+          supabase
+            .from('reviews')
+            .select('rating')
+            .eq('reviewed_id', targetUserId),
+          supabase
+            .from('posts')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', targetUserId)
+            .eq('is_active', false),
+          supabase
+            .from('messages')
+            .select('post_id, sender_id')
+            .eq('receiver_id', targetUserId),
+          supabase
+            .from('messages')
+            .select('post_id, sender_id')
+            .eq('sender_id', targetUserId)
+        ])
+
+        // 1. Process reviews
+        const reviewsData = reviewsRes.data
         if (reviewsData && reviewsData.length > 0) {
           const totalRating = reviewsData.reduce((acc: number, curr: any) => acc + (curr.rating || 0), 0)
           const avg = (totalRating / reviewsData.length).toFixed(1)
@@ -467,14 +497,69 @@ export default function DashboardPage() {
           setSelectedPostRating('0')
           setSelectedPostRatingCount(0)
         }
+
+        // 2. Process completed swaps count
+        setSelectedPostSwapCount(completedRes.count || 0)
+
+        // 3. Process response rate
+        const incoming = (incomingRes.data as any[]) || []
+        const outgoing = (outgoingRes.data as any[]) || []
+
+        if (incoming.length === 0) {
+          setSelectedPostResponseRateText('New')
+          setSelectedPostResponseRateColor('neutral')
+        } else {
+          const conversations = new Map<string, { post_id: string; sender_id: string }>()
+          incoming.forEach((msg) => {
+            if (msg.post_id && msg.sender_id) {
+              const key = `${msg.post_id}_${msg.sender_id}`
+              if (!conversations.has(key)) {
+                conversations.set(key, { post_id: msg.post_id, sender_id: msg.sender_id })
+              }
+            }
+          })
+
+          const totalConversations = conversations.size
+          if (totalConversations === 0) {
+            setSelectedPostResponseRateText('New')
+            setSelectedPostResponseRateColor('neutral')
+          } else {
+            const repliedPostIds = new Set<string>()
+            outgoing.forEach((msg) => {
+              if (msg.post_id) {
+                repliedPostIds.add(msg.post_id)
+              }
+            })
+
+            let repliedCount = 0
+            conversations.forEach((conv) => {
+              if (repliedPostIds.has(conv.post_id)) {
+                repliedCount++
+              }
+            })
+
+            const rate = Math.round((repliedCount / totalConversations) * 100)
+            setSelectedPostResponseRateText(`${rate}%`)
+            if (rate > 70) {
+              setSelectedPostResponseRateColor('green')
+            } else if (rate >= 40 && rate <= 70) {
+              setSelectedPostResponseRateColor('yellow')
+            } else {
+              setSelectedPostResponseRateColor('red')
+            }
+          }
+        }
       } catch (err) {
-        console.error('Error fetching post owner rating:', err)
+        console.error('Error fetching post owner rating and stats:', err)
         setSelectedPostRating('0')
         setSelectedPostRatingCount(0)
+        setSelectedPostSwapCount(0)
+        setSelectedPostResponseRateText('New')
+        setSelectedPostResponseRateColor('neutral')
       }
     }
 
-    loadPostOwnerRating()
+    loadPostOwnerRatingAndStats()
   }, [selectedPost])
 
   useEffect(() => {
@@ -2306,6 +2391,49 @@ export default function DashboardPage() {
                         <span>⭐</span>
                         <span>{selectedPostRating} / 5.0</span>
                         <span className="text-white/30">({selectedPostRatingCount} reviews)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="flex flex-wrap items-center gap-3 select-none">
+                  {/* Swaps Completed Card */}
+                  <div className="flex items-center gap-2 bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-xl p-2 px-3 shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
+                    <Check className="w-4 h-4 text-[#FF4D00] stroke-[2.5px] shrink-0" />
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <strong className="font-display font-black text-sm text-white leading-none">
+                          {selectedPostSwapCount !== null ? selectedPostSwapCount : '...'}
+                        </strong>
+                        <span className="text-[8px] font-mono font-bold text-white/40 uppercase tracking-widest leading-none">
+                          Swaps Completed
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Response Rate Card */}
+                  <div className="flex items-center gap-2 bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-xl p-2 px-3 shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
+                    <Zap className={`w-4 h-4 fill-current shrink-0 ${
+                      selectedPostResponseRateColor === 'green' ? 'text-emerald-400' :
+                      selectedPostResponseRateColor === 'yellow' ? 'text-amber-400' :
+                      selectedPostResponseRateColor === 'red' ? 'text-rose-400' :
+                      'text-white/60'
+                    }`} />
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <strong className={`font-display font-black text-sm leading-none ${
+                          selectedPostResponseRateColor === 'green' ? 'text-emerald-400' :
+                          selectedPostResponseRateColor === 'yellow' ? 'text-amber-400' :
+                          selectedPostResponseRateColor === 'red' ? 'text-rose-400' :
+                          'text-white'
+                        }`}>
+                          {selectedPostResponseRateText !== null ? selectedPostResponseRateText : '...'}
+                        </strong>
+                        <span className="text-[8px] font-mono font-bold text-white/40 uppercase tracking-widest leading-none">
+                          Response Rate
+                        </span>
                       </div>
                     </div>
                   </div>
