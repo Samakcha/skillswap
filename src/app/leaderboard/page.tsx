@@ -3,19 +3,21 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Trophy, 
   Crown, 
   Check, 
   Star, 
-  Heart, 
   MapPin, 
-  ArrowLeft
+  ArrowLeft,
+  Award,
+  Zap
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import SplitText from '@/components/SplitText'
+import { getBulkSkillScoreDetails } from '@/lib/reputation'
 
 // Framer Motion presets for staggered animations
 const FADE_UP = {
@@ -34,15 +36,6 @@ const CONTAINER_STAGGER = {
   }
 }
 
-const ROW_ANIMATION = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } 
-  }
-}
-
 interface LeaderboardUser {
   id: string
   full_name: string
@@ -51,8 +44,8 @@ interface LeaderboardUser {
   pin_code: string
   completedSwaps: number
   averageRating: number
-  totalLikes: number
   score: number
+  tier: string
   rank: number
 }
 
@@ -62,9 +55,10 @@ export default function LeaderboardPage() {
   
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([])
+  const [rawScoredUsers, setRawScoredUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isLight, setIsLight] = useState(false)
+  const [activeTab, setActiveTab] = useState<'neighborhood' | 'monthly' | 'all_time'>('neighborhood')
 
   // Real-time MutationObserver to sync theme toggles dynamically
   useEffect(() => {
@@ -109,87 +103,20 @@ export default function LeaderboardPage() {
         }
         setProfile(userProfile)
 
-        // 3. Fetch all profiles where pin_code matches the current user's pin_code
-        const { data: neighborProfiles, error: neighborError } = await (supabase
+        // 3. Fetch all profiles
+        const { data: allProfiles, error: profilesError } = await (supabase
           .from('profiles')
-          .select('*')
-          .eq('pin_code', userProfile.pin_code) as any)
+          .select('*') as any)
 
-        if (neighborError || !neighborProfiles || neighborProfiles.length === 0) {
-          setLeaderboardData([])
+        if (profilesError || !allProfiles || allProfiles.length === 0) {
+          setRawScoredUsers([])
           setLoading(false)
           return
         }
 
-        const profileIds = neighborProfiles.map((p: any) => p.id)
-
-        // 4. Fetch metrics for matched profiles in bulk (checking profileIds is not empty)
-        let postsData: any[] = []
-        let reviewsData: any[] = []
-
-        if (profileIds.length > 0) {
-          const [postsRes, reviewsRes] = await Promise.all([
-            supabase
-              .from('posts')
-              .select('id, user_id, is_active, likes(user_id)')
-              .in('user_id', profileIds) as any,
-            supabase
-              .from('reviews')
-              .select('reviewed_id, rating')
-              .in('reviewed_id', profileIds) as any
-          ])
-
-          if (!postsRes.error && postsRes.data) {
-            postsData = postsRes.data
-          }
-          if (!reviewsRes.error && reviewsRes.data) {
-            reviewsData = reviewsRes.data
-          }
-        }
-
-        // 5. Compute stats and ranking scores
-        const calculated: LeaderboardUser[] = neighborProfiles.map((prof: any) => {
-          const userPosts = postsData.filter((post: any) => post.user_id === prof.id)
-          
-          // Completed swaps: count of rows in posts where user_id matches and is_active is false
-          const completedSwaps = userPosts.filter((post: any) => post.is_active === false).length
-
-          // Total likes: sum of likes on user's posts
-          const totalLikes = userPosts.reduce((sum: number, post: any) => sum + (post.likes?.length || 0), 0)
-
-          // Average rating: average of rating column from reviews where reviewed_id matches (default to 0 if none)
-          const userReviews = reviewsData.filter((rev: any) => rev.reviewed_id === prof.id)
-          const averageRating = userReviews.length > 0
-            ? parseFloat((userReviews.reduce((sum: number, rev: any) => sum + (rev.rating || 0), 0) / userReviews.length).toFixed(2))
-            : 0
-
-          // Score: (completed_swaps × 10) + (average_rating × 5) + (total_likes × 1)
-          const score = parseFloat(((completedSwaps * 10) + (averageRating * 5) + (totalLikes * 1)).toFixed(2))
-
-          return {
-            id: prof.id,
-            full_name: prof.full_name || 'Neighbor',
-            neighborhood: prof.neighborhood,
-            avatar_url: prof.avatar_url,
-            pin_code: prof.pin_code,
-            completedSwaps,
-            averageRating,
-            totalLikes,
-            score,
-            rank: 0 // Will assign rank next
-          }
-        })
-
-        // Sort descending by score
-        calculated.sort((a, b) => b.score - a.score)
-
-        // Assign Rank (1-based index)
-        const ranked = calculated.map((item, idx) => ({
-          ...item,
-          rank: idx + 1
-        }))
-
-        setLeaderboardData(ranked)
+        // 4. Calculate reputation details in bulk
+        const scored = await getBulkSkillScoreDetails(supabase, allProfiles)
+        setRawScoredUsers(scored)
       } catch (err) {
         console.error('Error fetching leaderboard data:', err)
       } finally {
@@ -199,6 +126,38 @@ export default function LeaderboardPage() {
 
     loadLeaderboard()
   }, [router, supabase])
+
+  // Derive rankings list dynamically based on activeTab
+  const leaderboardData: LeaderboardUser[] = (() => {
+    let list = [...rawScoredUsers]
+
+    if (activeTab === 'neighborhood') {
+      // Filter to same pin code or neighborhood name
+      list = list.filter(u => u.pinCode === profile?.pin_code || (u.neighborhood && u.neighborhood === profile?.neighborhood))
+      list.sort((a, b) => b.score - a.score)
+    } else if (activeTab === 'monthly') {
+      // Filter to same pin code or neighborhood, sort by monthly (last 30 days) activity score
+      list = list.filter(u => u.pinCode === profile?.pin_code || (u.neighborhood && u.neighborhood === profile?.neighborhood))
+      list.sort((a, b) => b.monthlyScore - a.monthlyScore)
+    } else if (activeTab === 'all_time') {
+      // Platform-wide global ranking
+      list.sort((a, b) => b.score - a.score)
+    }
+
+    // Map fields and assign ranks
+    return list.map((item, idx) => ({
+      id: item.userId,
+      full_name: item.fullName,
+      neighborhood: item.neighborhood,
+      avatar_url: item.avatar_url,
+      pin_code: item.pinCode || '',
+      completedSwaps: item.completedSwapsCount,
+      averageRating: item.averageRating,
+      score: activeTab === 'monthly' ? item.monthlyScore : item.score,
+      tier: item.tier,
+      rank: idx + 1
+    }))
+  })()
 
   // Get current user stats
   const currentUserStats = leaderboardData.find(item => item.id === user?.id)
@@ -217,6 +176,21 @@ export default function LeaderboardPage() {
   const frontFaceClassOthers = isLight
     ? 'bg-black border-2 border-black text-white shadow-[6px_6px_0px_#000000]'
     : 'bg-[#0B0B0D]/90 border border-white/10 text-white backdrop-blur-md'
+
+  const getTierColorClass = (tier: string) => {
+    switch (tier) {
+      case 'Neighborhood Legend':
+        return 'text-[#FF6B00] border-[#FF6B00]/30 bg-[#FF6B00]/5'
+      case 'Community Mentor':
+        return 'text-amber-400 border-amber-400/30 bg-amber-400/5'
+      case 'Trusted Neighbor':
+        return 'text-emerald-400 border-emerald-400/30 bg-emerald-400/5'
+      case 'Active Swapper':
+        return 'text-blue-400 border-blue-400/30 bg-blue-400/5'
+      default:
+        return 'text-gray-400 border-white/10 bg-white/5'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-theme-bg text-gray-100 flex flex-col lg:flex-row font-sans selection:bg-[#FF6B00]/30 selection:text-white relative overflow-x-clip w-full">
@@ -260,7 +234,7 @@ export default function LeaderboardPage() {
               <div className="space-y-1.5">
                 <h1 className="font-display font-black text-3xl sm:text-4xl leading-[0.9] text-white tracking-tight uppercase flex flex-wrap gap-x-2">
                   <SplitText
-                    text="Neighborhood"
+                    text="SkillScore"
                     className="text-white"
                     delay={40}
                     duration={0.6}
@@ -279,7 +253,7 @@ export default function LeaderboardPage() {
                   />
                 </h1>
                 <p className="text-xs font-mono text-white/40 uppercase tracking-wide leading-relaxed pt-1">
-                  Compare your neighborhood swap ranking with peers in your local network.
+                  hyperlocal reputation rankings based on verified completed exchanges and neighborhood trust.
                 </p>
               </div>
             </div>
@@ -287,7 +261,7 @@ export default function LeaderboardPage() {
             {/* Right cancel/ZIP section */}
             <div className="flex flex-col sm:items-end gap-3 self-start sm:self-center">
               <div className="px-3.5 py-1.5 border border-[#FF6B00]/25 text-[#FF6B00] bg-[#FF6B00]/5 rounded-full font-mono text-[9px] font-black uppercase tracking-widest select-none shrink-0">
-                ZIP Code: {profile?.pin_code || 'N/A'}
+                Neighborhood: {profile?.neighborhood || 'Local'}
               </div>
               <button
                 onClick={() => router.push('/dashboard')}
@@ -297,6 +271,54 @@ export default function LeaderboardPage() {
               </button>
             </div>
           </motion.div>
+
+          {/* DYNAMIC LEADERBOARD TABS */}
+          <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative select-none">
+            {/* Neighborhood Tab */}
+            <button 
+              onClick={() => setActiveTab('neighborhood')}
+              className={`relative px-4.5 py-3 rounded-xl text-[11px] font-mono font-bold tracking-wider uppercase transition-all shrink-0 cursor-pointer z-10 ${activeTab === 'neighborhood' ? 'text-black' : 'text-white/50 hover:text-white'}`}
+            >
+              {activeTab === 'neighborhood' && (
+                <motion.span 
+                  layoutId="activeLeaderboardTab"
+                  className="absolute inset-0 bg-[#FF6B00] rounded-xl z-[-1] shadow-lg shadow-[#FF6B00]/15"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              Neighborhood
+            </button>
+
+            {/* Monthly Tab */}
+            <button 
+              onClick={() => setActiveTab('monthly')}
+              className={`relative px-4.5 py-3 rounded-xl text-[11px] font-mono font-bold tracking-wider uppercase transition-all shrink-0 cursor-pointer z-10 ${activeTab === 'monthly' ? 'text-black' : 'text-white/50 hover:text-white'}`}
+            >
+              {activeTab === 'monthly' && (
+                <motion.span 
+                  layoutId="activeLeaderboardTab"
+                  className="absolute inset-0 bg-[#FF6B00] rounded-xl z-[-1] shadow-lg"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              Monthly Rank
+            </button>
+
+            {/* All-time Tab */}
+            <button 
+              onClick={() => setActiveTab('all_time')}
+              className={`relative px-4.5 py-3 rounded-xl text-[11px] font-mono font-bold tracking-wider uppercase transition-all shrink-0 cursor-pointer z-10 ${activeTab === 'all_time' ? 'text-black' : 'text-white/50 hover:text-white'}`}
+            >
+              {activeTab === 'all_time' && (
+                <motion.span 
+                  layoutId="activeLeaderboardTab"
+                  className="absolute inset-0 bg-[#FF6B00] rounded-xl z-[-1] shadow-lg"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              All-Time Global
+            </button>
+          </div>
 
           {/* 3D Brutalist Column Podium Section */}
           {!loading && leaderboardData.length > 0 && (
@@ -327,8 +349,11 @@ export default function LeaderboardPage() {
                   <div className="w-full relative flex flex-col items-center">
                     <div className={`w-full flex flex-col items-center justify-center p-4 text-center rounded-b-xl rounded-t-2xl h-32 transition-all duration-300 ${frontFaceClassOthers}`}>
                       <span className="text-[10px] font-mono uppercase tracking-widest text-white/40 font-bold mb-1">[2] {secondPlace.full_name}</span>
+                      <span className="px-2 py-0.5 border rounded-md text-[8px] font-mono font-bold uppercase tracking-wider scale-90 mt-1 truncate max-w-full block text-center leading-none select-none duration-150 border-white/10 bg-white/5 text-white/60">
+                        {secondPlace.tier}
+                      </span>
                       <span className="text-xs font-mono text-[#FF6B00] font-black mt-2">
-                        {secondPlace.score.toFixed(1)} SCORE
+                        {secondPlace.score} SkillScore
                       </span>
                     </div>
                   </div>
@@ -378,8 +403,11 @@ export default function LeaderboardPage() {
                   <div className="w-full relative flex flex-col items-center z-0">
                     <div className={`w-full flex flex-col items-center justify-center p-4 text-center rounded-b-xl rounded-t-2xl h-40 transition-all duration-300 ${frontFaceClass1st}`}>
                       <span className="text-[10px] font-mono uppercase tracking-widest text-[#FF6B00] font-black mb-1">[1] {firstPlace.full_name}</span>
-                      <span className="text-sm font-display font-black text-white mt-2 flex items-center gap-1 px-3.5 py-1 bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-lg">
-                        {firstPlace.score.toFixed(1)} SCORE
+                      <span className="px-2 py-0.5 border rounded-md text-[8px] font-mono font-bold uppercase tracking-wider scale-90 mt-1 truncate max-w-full block text-center leading-none select-none duration-150 border-[#FF6B00]/30 bg-[#FF6B00]/5 text-[#FF6B00]">
+                        {firstPlace.tier}
+                      </span>
+                      <span className="text-sm font-display font-black text-white mt-2.5 flex items-center gap-1 px-3.5 py-1 bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-lg">
+                        {firstPlace.score} SkillScore
                       </span>
                     </div>
                   </div>
@@ -428,8 +456,11 @@ export default function LeaderboardPage() {
                   <div className="w-full relative flex flex-col items-center">
                     <div className={`w-full flex flex-col items-center justify-center p-4 text-center rounded-b-xl rounded-t-2xl h-24 transition-all duration-300 ${frontFaceClassOthers}`}>
                       <span className="text-[10px] font-mono uppercase tracking-widest text-white/40 font-bold mb-1">[3] {thirdPlace.full_name}</span>
+                      <span className="px-2 py-0.5 border rounded-md text-[8px] font-mono font-bold uppercase tracking-wider scale-90 mt-1 truncate max-w-full block text-center leading-none select-none duration-150 border-white/10 bg-white/5 text-white/60">
+                        {thirdPlace.tier}
+                      </span>
                       <span className="text-xs font-mono text-[#FF6B00]/80 font-black mt-2">
-                        {thirdPlace.score.toFixed(1)} SCORE
+                        {thirdPlace.score} SkillScore
                       </span>
                     </div>
                   </div>
@@ -500,12 +531,22 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
                   
-                  {/* Score */}
+                  {/* SkillScore */}
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-white/40">Score</span>
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-white/40">SkillScore</span>
                     <span className="text-2xl font-display font-black text-[#FF6B00] pt-1">
-                      {currentUserStats ? currentUserStats.score.toFixed(1) : '0.0'}
+                      {currentUserStats ? currentUserStats.score : '0'}
                     </span>
+                  </div>
+
+                  {/* Tier */}
+                  <div className="flex flex-col justify-center">
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-white/40">Rep Tier</span>
+                    <div className="pt-1.5">
+                      <span className={`px-2.5 py-1 border rounded-md text-[9px] font-mono font-bold uppercase tracking-wider select-none shrink-0 ${currentUserStats ? getTierColorClass(currentUserStats.tier) : 'text-white/20 border-white/5 bg-white/5'}`}>
+                        {currentUserStats ? currentUserStats.tier : 'New Swapper'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Completed Swaps */}
@@ -523,15 +564,6 @@ export default function LeaderboardPage() {
                     <span className="text-xl font-display font-black text-white flex items-center gap-1 pt-1">
                       <Star className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
                       <span>{currentUserStats ? currentUserStats.averageRating.toFixed(1) : '0.0'}</span>
-                    </span>
-                  </div>
-
-                  {/* Total Likes */}
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-white/40">Likes</span>
-                    <span className="text-xl font-display font-black text-white flex items-center gap-1 pt-1">
-                      <Heart className="w-4 h-4 text-rose-500 fill-rose-500 shrink-0" />
-                      <span>{currentUserStats ? currentUserStats.totalLikes : '0'}</span>
                     </span>
                   </div>
                 </div>
@@ -552,9 +584,9 @@ export default function LeaderboardPage() {
                     <tr className="border-b border-white/10 bg-white/[0.02]">
                       <th className="px-4 py-3 border-r border-white/10 text-center font-bold uppercase tracking-wider w-20">Rank</th>
                       <th className="px-4 py-3 border-r border-white/10 text-left font-bold uppercase tracking-wider">Player</th>
-                      <th className="px-4 py-3 border-r border-white/10 text-center font-bold uppercase tracking-wider w-28">Swaps</th>
+                      <th className="px-4 py-3 border-r border-white/10 text-center font-bold uppercase tracking-wider w-36">Tier</th>
+                      <th className="px-4 py-3 border-r border-white/10 text-center font-bold uppercase tracking-wider w-24">Swaps</th>
                       <th className="px-4 py-3 border-r border-white/10 text-center font-bold uppercase tracking-wider w-24">Rating</th>
-                      <th className="px-4 py-3 border-r border-white/10 text-center font-bold uppercase tracking-wider w-24">Likes</th>
                       <th className="px-4 py-3 text-right font-bold uppercase tracking-wider w-28">Score</th>
                     </tr>
                   </thead>
@@ -577,7 +609,7 @@ export default function LeaderboardPage() {
               </div>
               <h3 className="font-display font-black text-lg text-white uppercase tracking-tight">No rankings yet</h3>
               <p className="text-xs text-white/40 mt-1 max-w-sm leading-relaxed">
-                No profiles were found matching your ZIP code. Complete your profile configurations to declare your slot.
+                No profiles were found matching this filter set. Complete your profile details to join.
               </p>
             </div>
           ) : (
@@ -595,10 +627,10 @@ export default function LeaderboardPage() {
                     }`}>
                       <th className="px-4 py-3.5 border-r border-white/10 text-center font-bold uppercase w-20 shrink-0">Rank</th>
                       <th className="px-4 py-3.5 border-r border-white/10 text-left font-bold uppercase">Player</th>
-                      <th className="px-4 py-3.5 border-r border-white/10 text-center font-bold uppercase w-28 shrink-0">Swaps</th>
+                      <th className="px-4 py-3.5 border-r border-white/10 text-center font-bold uppercase w-36 shrink-0">Reputation Tier</th>
+                      <th className="px-4 py-3.5 border-r border-white/10 text-center font-bold uppercase w-24 shrink-0">Swaps</th>
                       <th className="px-4 py-3.5 border-r border-white/10 text-center font-bold uppercase w-24 shrink-0">Rating</th>
-                      <th className="px-4 py-3.5 border-r border-white/10 text-center font-bold uppercase w-24 shrink-0">Likes</th>
-                      <th className="px-4 py-3.5 text-right font-bold uppercase w-28 shrink-0">Score</th>
+                      <th className="px-4 py-3.5 text-right font-bold uppercase w-28 shrink-0">SkillScore</th>
                     </tr>
                   </thead>
                   
@@ -658,6 +690,13 @@ export default function LeaderboardPage() {
                             </div>
                           </td>
 
+                          {/* Reputation Tier Column */}
+                          <td className="px-4 py-4.5 border-r border-white/10 text-center select-none font-bold">
+                            <span className={`px-2 py-0.5 border rounded-md text-[8.5px] font-mono font-bold uppercase tracking-wider block text-center leading-none ${getTierColorClass(row.tier)}`}>
+                              {row.tier}
+                            </span>
+                          </td>
+
                           {/* Completed Swaps Column */}
                           <td className="px-4 py-4.5 border-r border-white/10 text-center font-bold font-mono">
                             {row.completedSwaps}
@@ -671,17 +710,9 @@ export default function LeaderboardPage() {
                             </div>
                           </td>
 
-                          {/* Likes Column */}
-                          <td className="px-4 py-4.5 border-r border-white/10 text-center font-bold font-mono">
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-white">
-                              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                              <span>{row.totalLikes}</span>
-                            </div>
-                          </td>
-
                           {/* Score Column */}
                           <td className="px-4 py-4.5 text-right font-display font-black text-[#FF6B00] text-sm">
-                            {row.score.toFixed(1)}
+                            {row.score}
                           </td>
                         </tr>
                       )
@@ -714,11 +745,11 @@ function SkeletonRow() {
           </div>
         </div>
       </td>
-      <td className="px-4 py-4 border-r border-white/10 text-center w-28">
-        <div className="w-8 h-4 bg-white/5 rounded mx-auto" />
+      <td className="px-4 py-4 border-r border-white/10 text-center w-36">
+        <div className="w-24 h-4.5 bg-white/5 rounded mx-auto" />
       </td>
       <td className="px-4 py-4 border-r border-white/10 text-center w-24">
-        <div className="w-10 h-4 bg-white/5 rounded mx-auto" />
+        <div className="w-8 h-4 bg-white/5 rounded mx-auto" />
       </td>
       <td className="px-4 py-4 border-r border-white/10 text-center w-24">
         <div className="w-10 h-4 bg-white/5 rounded mx-auto" />

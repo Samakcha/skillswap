@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import SplitText from '@/components/SplitText'
+import { getUserSkillScoreDetails } from '@/lib/reputation'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -48,6 +49,7 @@ export default function MyPostsPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
+  const [userRep, setUserRep] = useState<{ score: number; tier: string } | null>(null)
   
   // State for interactive features
   const [searchQuery, setSearchQuery] = useState('')
@@ -121,6 +123,16 @@ export default function MyPostsPage() {
         // Update cache
         if (typeof window !== 'undefined') {
           localStorage.setItem('skillswap_profile', JSON.stringify(freshProfile))
+        }
+
+        // Fetch reputation score details for the logged-in user
+        try {
+          const repDetails = await getUserSkillScoreDetails(supabase, currentUser.id)
+          if (repDetails) {
+            setUserRep({ score: repDetails.score, tier: repDetails.tier })
+          }
+        } catch (repErr) {
+          console.error('Error fetching user reputation:', repErr)
         }
 
         // 4. Fetch all posts created by this user (both active and completed/inactive)
@@ -650,6 +662,17 @@ export default function MyPostsPage() {
                               <MapPin className="w-2.5 h-2.5 text-black/40 shrink-0" />
                               <span className="truncate">{profile?.neighborhood || 'Local Area'}</span>
                             </div>
+                            {/* SkillScore Compact Badge */}
+                            {userRep && (
+                              <div className="flex items-center gap-1.5 mt-1 select-none">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#FF4D00]/15 text-black border border-black/10 text-[8px] font-mono font-bold uppercase tracking-wider leading-none">
+                                  {userRep.score} REP
+                                </span>
+                                <span className="text-[7.5px] font-mono font-black text-black/50 uppercase tracking-wider leading-none">
+                                  {userRep.tier}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 

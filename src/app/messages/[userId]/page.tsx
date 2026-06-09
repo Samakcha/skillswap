@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/Sidebar'
 import SplitText from '@/components/SplitText'
+import { getUserSkillScoreDetails } from '@/lib/reputation'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -49,6 +50,7 @@ export default function ChatPage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [otherProfile, setOtherProfile] = useState<any>(null)
+  const [otherRep, setOtherRep] = useState<{ score: number; tier: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [initialUnreadCount, setInitialUnreadCount] = useState(0)
   const [unreadMessageIds, setUnreadMessageIds] = useState<Set<string>>(new Set())
@@ -127,6 +129,16 @@ export default function ChatPage() {
           .single()
 
         setOtherProfile(profile)
+
+        // Query the other swapper's reputation score and tier
+        try {
+          const repDetails = await getUserSkillScoreDetails(supabase, otherId)
+          if (repDetails) {
+            setOtherRep({ score: repDetails.score, tier: repDetails.tier })
+          }
+        } catch (err) {
+          console.error('Error loading other user reputation:', err)
+        }
 
         // Check if either user has blocked the other
         const { data: blocks } = await (supabase
@@ -534,6 +546,15 @@ export default function ChatPage() {
                   tag="span"
                 />
               </h2>
+              {otherRep && (
+                <div className="text-[#FF4D00] text-[10px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 pt-0.5">
+                  <span>{otherRep.tier}</span>
+                  <span className="text-white/20">•</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#FF4D00]/20 text-[#FF4D00] border border-[#FF4D00]/30 text-[9px] font-mono font-bold uppercase tracking-wider leading-none">
+                    {otherRep.score} REP
+                  </span>
+                </div>
+              )}
               <p className="text-white/30 text-[10px] font-mono uppercase tracking-widest flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-[#FF4D00] shrink-0" />
                 <span>{otherProfile?.neighborhood || 'Local Area'} (ZIP: {otherProfile?.pin_code})</span>

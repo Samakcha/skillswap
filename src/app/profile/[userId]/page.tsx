@@ -6,6 +6,7 @@ import SplitText from '@/components/SplitText'
 import CircularGallery from '@/components/CircularGallery'
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { getBulkSkillScoreDetails, computeLocalRanks } from '@/lib/reputation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Sparkles, 
@@ -117,6 +118,9 @@ export default function UserProfilePage() {
   const [swapCount, setSwapCount] = useState<number>(0)
   const [responseRateText, setResponseRateText] = useState<string>('New')
   const [responseRateColor, setResponseRateColor] = useState<string>('neutral')
+  const [skillScore, setSkillScore] = useState<number>(0)
+  const [reputationTier, setReputationTier] = useState<string>('New Swapper')
+  const [neighborhoodRank, setNeighborhoodRank] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarError, setAvatarError] = useState('')
@@ -297,6 +301,24 @@ export default function UserProfilePage() {
         
         const reviewsData = (reviewsRes.data as any[]) || []
         setViewedReviews(reviewsData)
+
+        // Calculate reputation score and local rankings in-memory
+        try {
+          const { data: allProfiles } = await supabase.from('profiles').select('*')
+          if (allProfiles && allProfiles.length > 0) {
+            const bulkScored = await getBulkSkillScoreDetails(supabase, allProfiles)
+            const targetScoredUser = bulkScored.find(u => u.userId === targetUserId)
+            if (targetScoredUser) {
+              setSkillScore(targetScoredUser.score)
+              setReputationTier(targetScoredUser.tier)
+              
+              const localRanks = computeLocalRanks(bulkScored, targetUserId)
+              setNeighborhoodRank(localRanks.neighborhoodRank)
+            }
+          }
+        } catch (rankErr) {
+          console.error("Error computing profile ranks:", rankErr)
+        }
 
         // Calculate average star rating
         const totalRating = reviewsData.reduce((acc: number, curr: any) => acc + (curr.rating || 0), 0)
@@ -919,6 +941,25 @@ export default function UserProfilePage() {
                   <div className="text-[10px] font-mono uppercase tracking-widest text-white/40 flex items-center justify-center sm:justify-start gap-1">
                     <MapPin className="w-3.5 h-3.5 text-[#FF4D00] shrink-0" />
                     <span>{viewedProfile?.neighborhood || 'Local Area'} (ZIP {viewedProfile?.pin_code})</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2 justify-center sm:justify-start select-none">
+                    {/* SkillScore */}
+                    <div className="flex items-center gap-2 bg-[#FF4D00]/10 border border-[#FF4D00]/30 rounded-xl px-3 py-1.5 shadow-[2px_2px_0px_#000000]">
+                      <span className="text-[13px] font-display font-black text-[#FF4D00] leading-none">{skillScore} REP</span>
+                    </div>
+
+                    {/* Reputation Tier */}
+                    <div className="flex items-center gap-2 bg-black border border-white/10 rounded-xl px-3 py-1.5">
+                      <span className="text-[10px] font-mono font-bold text-white uppercase tracking-wider">{reputationTier}</span>
+                    </div>
+
+                    {/* Neighborhood Rank */}
+                    {neighborhoodRank !== null && (
+                      <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/5 border border-emerald-500/25 rounded-xl px-3 py-1.5">
+                        <span>#{neighborhoodRank} in {viewedProfile?.neighborhood || 'Local Area'}</span>
+                      </div>
+                    )}
                   </div>
 
                   {viewedProfile?.bio && (
@@ -1637,6 +1678,12 @@ export default function UserProfilePage() {
                         <span>⭐</span>
                         <span>{selectedPostRating} / 5.0</span>
                         <span className="text-white/30">({selectedPostRatingCount} reviews)</span>
+                      </div>
+
+                      {/* SkillScore Badge */}
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-[#FF4D00] flex items-center gap-1 font-bold">
+                        <span>🛡️</span>
+                        <span>{skillScore} REP ({reputationTier})</span>
                       </div>
                     </div>
                   </div>

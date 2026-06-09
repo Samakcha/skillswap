@@ -7,6 +7,7 @@ import CircularGallery from '@/components/CircularGallery'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getBulkSkillScoreDetails, computeLocalRanks } from '@/lib/reputation'
 import { 
   Sparkles, 
   MapPin, 
@@ -146,6 +147,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
+  const [bulkScoredUsers, setBulkScoredUsers] = useState<any[]>([])
+  const [scoredUsersMap, setScoredUsersMap] = useState<Record<string, { score: number; tier: string }>>({})
+  const [hoveredUserId, setHoveredUserId] = useState<string | null>(null)
 
   // Helper to enrich posts with likes metadata using pre-fetched database relationships
   function enrichPostsList(postsList: any[], currentUserId: string | null) {
@@ -691,6 +695,23 @@ export default function DashboardPage() {
         } else {
           // If posts were already loaded from cache, filter out posts from blocked users
           setPosts(prev => prev.filter((post: any) => !blockedUserIds.has(post.user_id)))
+        }
+
+        // Fetch all profiles and calculate bulk reputation scores
+        try {
+          const { data: allProfiles } = await supabase.from('profiles').select('*')
+          if (allProfiles && allProfiles.length > 0) {
+            const bulkScored = await getBulkSkillScoreDetails(supabase, allProfiles)
+            setBulkScoredUsers(bulkScored)
+            
+            const map: Record<string, { score: number; tier: string }> = {}
+            bulkScored.forEach((item: any) => {
+              map[item.userId] = { score: item.score, tier: item.tier }
+            })
+            setScoredUsersMap(map)
+          }
+        } catch (repErr) {
+          console.error('Error fetching bulk reputation:', repErr)
         }
       } catch (error) {
         console.error('Error loading dashboard data:', error)
@@ -1892,34 +1913,106 @@ export default function DashboardPage() {
                       {/* CARD FOOTER & AUTHOR PANEL */}
                       <div className="pt-5 mt-5 border-t border-black/10 flex items-center justify-between relative z-10">
                         
-                        {/* Author metadata (Clickable Profile Link) */}
-                        <div 
-                          onClick={() => router.push(`/profile/${post.user_id}`)}
-                          className="flex items-center gap-2.5 min-w-0 cursor-pointer group/author hover:opacity-85 transition-all"
-                          title={`View ${post.profiles?.full_name}'s profile`}
-                        >
-                          
-                          {/* Avatar Circle with image fallback */}
-                          <div className="w-8 h-8 rounded-full bg-[#FF4D00] border-2 border-black overflow-hidden flex items-center justify-center shrink-0">
-                            {post.profiles?.avatar_url ? (
-                              <img src={post.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
-                            ) : (
-                              <span className="font-bold text-xs text-black uppercase">{post.profiles?.full_name?.charAt(0).toUpperCase() || 'S'}</span>
-                            )}
-                          </div>
+                         {/* Author metadata (Clickable Profile Link with Hover Card) */}
+                        {(() => {
+                          const authorRep = scoredUsersMap[post.user_id] || { score: 0, tier: 'New Swapper' }
+                          const hoveredUserData = bulkScoredUsers.find(u => u.userId === post.user_id)
+                          const hoveredUserRanks = hoveredUserData ? computeLocalRanks(bulkScoredUsers, post.user_id) : null
 
-                          {/* Author Name and Location context */}
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-display font-black uppercase tracking-wider text-black group-hover/author:text-[#FF4D00] transition-colors truncate leading-none">
-                              {post.profiles?.full_name}
-                            </div>
-                            <div className="text-[9px] font-mono uppercase tracking-wider text-black/55 flex items-center gap-0.5 pt-1 truncate">
-                              <MapPin className="w-2.5 h-2.5 text-black/40 shrink-0" />
-                              <span className="truncate">{post.profiles?.neighborhood || 'Local Area'}</span>
-                            </div>
-                          </div>
+                          return (
+                            <div 
+                              onClick={() => router.push(`/profile/${post.user_id}`)}
+                              onMouseEnter={() => setHoveredUserId(post.user_id)}
+                              onMouseLeave={() => setHoveredUserId(null)}
+                              className="flex items-center gap-2.5 min-w-0 cursor-pointer group/author hover:opacity-95 transition-all relative z-30"
+                              title={`View ${post.profiles?.full_name}'s profile`}
+                            >
+                              {/* Hover Card Tooltip */}
+                              <AnimatePresence>
+                                {hoveredUserId === post.user_id && hoveredUserData && (
+                                  <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    className="absolute bottom-full left-0 mb-3.5 w-64 bg-[#09090b] border-2 border-white/10 rounded-2xl p-4 shadow-[8px_8px_0px_#FF4D00] z-50 text-white select-none pointer-events-none"
+                                  >
+                                    <div className="space-y-3">
+                                      <div>
+                                        <h4 className="font-display font-black text-xs uppercase text-white truncate">{hoveredUserData.fullName}</h4>
+                                        <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">{hoveredUserData.neighborhood || 'Local Area'}</span>
+                                      </div>
+                                      
+                                      <div className="flex items-center justify-between border-t border-white/5 pt-2">
+                                        <div className="flex flex-col">
+                                          <span className="text-[8px] font-mono uppercase text-white/40 tracking-wider">SkillScore</span>
+                                          <span className="text-sm font-display font-black text-[#FF4D00]">{hoveredUserData.score} REP</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                          <span className="text-[8px] font-mono uppercase text-white/40 tracking-wider">Tier</span>
+                                          <span className="text-[8.5px] font-mono font-black text-white uppercase tracking-wider block text-center leading-none px-1.5 py-0.5 border border-white/10 bg-white/5 rounded-md">
+                                            {hoveredUserData.tier}
+                                          </span>
+                                        </div>
+                                      </div>
 
-                        </div>
+                                      {hoveredUserRanks && (
+                                        <div className="border-t border-white/5 pt-2 flex flex-col gap-1">
+                                          <span className="text-[8px] font-mono uppercase text-white/40 tracking-wider">Local Standing</span>
+                                          <span className="text-[9.5px] font-mono font-bold text-emerald-400">
+                                            #{hoveredUserRanks.neighborhoodRank} in {hoveredUserData.neighborhood || 'Local Area'}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      <div className="border-t border-white/5 pt-2 grid grid-cols-2 gap-2 text-center">
+                                        <div>
+                                          <span className="block text-[8px] font-mono uppercase text-white/40">Swaps</span>
+                                          <span className="text-xs font-mono font-bold text-white">{hoveredUserData.completedSwapsCount}</span>
+                                        </div>
+                                        <div>
+                                          <span className="block text-[8px] font-mono uppercase text-white/40">Rating</span>
+                                          <span className="text-xs font-mono font-bold text-white">⭐ {hoveredUserData.averageRating.toFixed(1)}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                              
+                              {/* Avatar Circle with image fallback */}
+                              <div className="w-8 h-8 rounded-full bg-[#FF4D00] border-2 border-black overflow-hidden flex items-center justify-center shrink-0">
+                                {post.profiles?.avatar_url ? (
+                                  <img src={post.profiles.avatar_url} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                  <span className="font-bold text-xs text-black uppercase">{post.profiles?.full_name?.charAt(0).toUpperCase() || 'S'}</span>
+                                )}
+                              </div>
+
+                              {/* Author Name and Location context */}
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-display font-black uppercase tracking-wider text-black group-hover/author:text-[#FF4D00] transition-colors truncate leading-none">
+                                  {post.profiles?.full_name}
+                                </div>
+                                <div className="text-[9px] font-mono uppercase tracking-wider text-black/55 flex items-center gap-0.5 pt-1 truncate">
+                                  <MapPin className="w-2.5 h-2.5 text-black/40 shrink-0" />
+                                  <span className="truncate">{post.profiles?.neighborhood || 'Local Area'}</span>
+                                </div>
+                                
+                                {/* SkillScore Compact Badge */}
+                                <div className="flex items-center gap-1.5 mt-1 select-none">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#FF4D00]/15 text-black border border-black/10 text-[8px] font-mono font-bold uppercase tracking-wider leading-none">
+                                    {authorRep.score} REP
+                                  </span>
+                                  <span className="text-[7.5px] font-mono font-black text-black/50 uppercase tracking-wider leading-none">
+                                    {authorRep.tier}
+                                  </span>
+                                </div>
+                              </div>
+
+                            </div>
+                          )
+                        })()}
 
                         {/* View Post Button */}
                         <div className="shrink-0 pl-2 flex items-center gap-2">
@@ -2392,6 +2485,28 @@ export default function DashboardPage() {
                         <span>{selectedPostRating} / 5.0</span>
                         <span className="text-white/30">({selectedPostRatingCount} reviews)</span>
                       </div>
+
+                      {/* Reputation & Ranks */}
+                      {(() => {
+                        const authorRepData = bulkScoredUsers.find((u: any) => u.userId === selectedPost.user_id)
+                        const authorRanks = authorRepData ? computeLocalRanks(bulkScoredUsers, selectedPost.user_id) : null
+                        if (!authorRepData) return null
+                        return (
+                          <>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[#FF4D00]/20 text-[#FF4D00] border border-[#FF4D00]/30 text-[9px] font-mono font-bold uppercase tracking-wider leading-none">
+                              {authorRepData.score} REP
+                            </span>
+                            <span className="text-[9px] font-mono font-black text-white/60 uppercase tracking-wider leading-none">
+                              {authorRepData.tier}
+                            </span>
+                            {authorRanks && (
+                              <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                                <span>🏆 #{authorRanks.neighborhoodRank} in {authorRepData.neighborhood || 'Local Area'}</span>
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>
