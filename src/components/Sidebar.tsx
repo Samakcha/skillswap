@@ -28,7 +28,8 @@ import {
   Lightbulb,
   Trophy,
   History,
-  Megaphone
+  Megaphone,
+  Bookmark
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -429,6 +430,11 @@ export default function Sidebar({ profile, supabase, user }: SidebarProps) {
       name: 'All Posts',
       path: '/posts',
       icon: FileText
+    },
+    {
+      name: 'Saved',
+      path: '/saved',
+      icon: Bookmark
     },
     {
       name: 'Announcements',

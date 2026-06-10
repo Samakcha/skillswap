@@ -44,7 +44,8 @@ import {
   Wrench,
   GraduationCap,
   Briefcase,
-  Leaf
+  Leaf,
+  Bookmark
 } from 'lucide-react'
 
 // Framer Motion Animation Presets
@@ -150,6 +151,7 @@ export default function DashboardPage() {
   const [bulkScoredUsers, setBulkScoredUsers] = useState<any[]>([])
   const [scoredUsersMap, setScoredUsersMap] = useState<Record<string, { score: number; tier: string }>>({})
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null)
+  const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set())
 
   // Helper to enrich posts with likes metadata using pre-fetched database relationships
   function enrichPostsList(postsList: any[], currentUserId: string | null) {
@@ -642,6 +644,15 @@ export default function DashboardPage() {
         }
         setUser(user)
 
+        // Fetch saved posts for the current user
+        const { data: savedPostsData } = await (supabase
+          .from('saved_posts') as any)
+          .select('post_id')
+          .eq('user_id', user.id)
+        
+        const savedIds = new Set<string>((savedPostsData || []).map((s: any) => s.post_id))
+        setSavedPostIds(savedIds)
+
         // 4. Fetch fresh profile details from DB
         const { data: freshProfile } = await (supabase
           .from('profiles')
@@ -1106,6 +1117,65 @@ export default function DashboardPage() {
       supabase.removeChannel(mediaChannel)
     }
   }, [user])
+
+  // Handle toggling saved posts
+  async function handleToggleSave(postId: string) {
+    if (!user || !profile) {
+      showToast("You must be logged in to save posts.", "error")
+      return
+    }
+
+    const isSaved = savedPostIds.has(postId)
+
+    // Optimistic Update (instant UI feedback)
+    setSavedPostIds(prev => {
+      const next = new Set(prev)
+      if (isSaved) {
+        next.delete(postId)
+      } else {
+        next.add(postId)
+      }
+      return next
+    })
+
+    try {
+      if (isSaved) {
+        // Delete row
+        const { error } = await (supabase
+          .from('saved_posts') as any)
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id)
+
+        if (error) throw error
+        showToast("Post removed from saved list.", "success")
+      } else {
+        // Insert row
+        const { error } = await (supabase
+          .from('saved_posts') as any)
+          .insert({
+            post_id: postId,
+            user_id: user.id
+          })
+
+        if (error) throw error
+        showToast("Post saved successfully.", "success")
+      }
+    } catch (err: any) {
+      console.error("Error toggling save post:", err)
+      showToast("Failed to update saved state.", "error")
+      // Revert state on error
+      setSavedPostIds(prev => {
+        const next = new Set(prev)
+        if (isSaved) {
+          next.add(postId)
+        } else {
+          next.delete(postId)
+        }
+        return next
+      })
+    }
+  }
 
   // Handle toggling likes
   async function handleLikeClick(e: React.MouseEvent, post: any) {
@@ -1846,6 +1916,27 @@ export default function DashboardPage() {
                               <Heart className={`w-3 h-3 transition-colors ${post.has_liked ? 'fill-pink-500 text-pink-500' : 'text-pink-500'}`} />
                               <span>{post.like_count || 0}</span>
                             </div>
+
+                            {!isOwnPost && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  e.preventDefault()
+                                  handleToggleSave(post.id)
+                                }}
+                                className="flex items-center justify-center p-1 rounded-full hover:bg-black/5 transition-colors cursor-pointer shrink-0"
+                                title={savedPostIds.has(post.id) ? "Unsave Post" : "Save Post"}
+                              >
+                                <Bookmark 
+                                  className={`w-3.5 h-3.5 transition-colors ${
+                                    savedPostIds.has(post.id) 
+                                      ? 'fill-[#FF4D00] text-[#FF4D00]' 
+                                      : 'text-gray-400 hover:text-[#FF4D00]'
+                                  }`} 
+                                />
+                              </button>
+                            )}
                           </div>
 
                         </div>
@@ -2758,6 +2849,20 @@ export default function DashboardPage() {
                       >
                         <Heart className={`w-3.5 h-3.5 transition-colors ${selectedPost.has_liked ? 'fill-black text-black' : 'text-black group-hover/likebtn:fill-black'}`} />
                         <span>{selectedPost.has_liked ? 'Liked' : 'Like'}</span>
+                      </button>
+
+                      {/* Save Action */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSave(selectedPost.id)}
+                        className={`inline-flex items-center gap-1.5 px-4.5 py-3 border-2 border-black rounded-xl font-mono font-black text-[10px] uppercase tracking-wider transition-all active:scale-95 cursor-pointer shadow-[3px_3px_0px_#FFFFFF] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] group/savebtn ${
+                          savedPostIds.has(selectedPost.id)
+                            ? 'bg-[#FF4D00] text-black font-black'
+                            : 'bg-white text-black hover:bg-[#FF4D00]'
+                        }`}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 transition-colors ${savedPostIds.has(selectedPost.id) ? 'fill-black text-black' : 'text-black group-hover/savebtn:fill-black'}`} />
+                        <span>{savedPostIds.has(selectedPost.id) ? 'Saved' : 'Save'}</span>
                       </button>
 
                       {/* Swap/Chat Action */}
