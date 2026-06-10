@@ -507,10 +507,7 @@ export default function Home() {
             transition={{ type: "spring", stiffness: 50, damping: 14 }}
             className="lg:col-span-6 space-y-6 text-center"
           >
-            <span className="inline-flex items-center gap-2 px-4 py-2 border-2 border-[#FF4D00] text-xs font-mono font-bold text-[#FF4D00] uppercase tracking-wider bg-transparent">
-              <Sparkles className="w-3.5 h-3.5 animate-spin-12s" />
-              <span>TEST THE ENGINE LIVE</span>
-            </span>
+
             <h2 className="font-display font-black text-4xl sm:text-5xl md:text-6xl uppercase tracking-tight leading-[0.9] text-white">
               RUN A PROXIMITY<br />
               MATCH ENGINE SIMULATION.
