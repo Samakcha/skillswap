@@ -8,17 +8,17 @@
 
 .dock-panel {
   position: absolute;
-  bottom: 0.5rem;
+  top: 0.5rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   width: fit-content;
   gap: 0.75rem;
   border-radius: 9999px; /* Rounded pill shape matching brutalist style */
   background-color: #000000;
   border: 2px solid #ffffff;
-  padding: 0 0.75rem 0.5rem;
+  padding: 0.5rem 0.75rem 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -59,7 +59,7 @@
 
 .dock-label {
   position: absolute;
-  top: -1.75rem;
+  bottom: -1.75rem;
   left: 50%;
   width: fit-content;
   white-space: pre;

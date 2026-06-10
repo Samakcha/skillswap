@@ -179,7 +179,7 @@ export default function Home() {
 
 
       {/* Mobile Viewport Dock Navigation Bar */}
-      <div className="fixed bottom-6 left-0 w-full z-50 flex justify-center md:hidden pointer-events-none">
+      <div className="fixed top-6 left-0 w-full z-50 flex justify-center md:hidden pointer-events-none">
         <div className="pointer-events-auto">
           <Dock items={dockItems} />
         </div>
