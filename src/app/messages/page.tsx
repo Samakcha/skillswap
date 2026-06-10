@@ -389,11 +389,6 @@ export default function MessagesPage() {
           <div className="absolute inset-0 bg-radial-gradient from-[#FF4D00]/5 to-transparent pointer-events-none" />
           
           <div className="space-y-4 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF4D00] animate-pulse" />
-              <span>Direct Chat Channels</span>
-            </div>
-            
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[0.9] text-white tracking-tight uppercase flex flex-col gap-2">
                 <SplitText

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, AlertCircle, ArrowLeft, UserPlus, MapPin, Users, Layers, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Loader2, AlertCircle, ArrowLeft, UserPlus, MapPin, Users, Layers, ArrowRight } from 'lucide-react'
 import BackgroundLiquidEther from '@/components/BackgroundLiquidEther'
 
 // Framer Motion Animation Presets
@@ -164,10 +164,6 @@ export default function JoinNeighborhoodPage() {
           </div>
 
           <div className="relative z-10 py-8 lg:py-0 space-y-5 lg:space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-black text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              PIN VERIFIED NEIGHBORHOOD ACCESS
-            </div>
             <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-7xl uppercase tracking-tight leading-[0.85] text-white">
               JOIN<br />
               THE<br />
@@ -227,9 +223,6 @@ export default function JoinNeighborhoodPage() {
                         <AlertCircle className="w-7 h-7" />
                       </div>
                       <div className="space-y-3">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 border border-rose-500/30 rounded-full font-mono text-[9px] font-black text-rose-300 uppercase tracking-wider bg-rose-500/5">
-                          INVITE CHECK FAILED
-                        </div>
                         <h1 className="font-display font-black text-4xl sm:text-5xl uppercase tracking-tight leading-none text-white">
                           Invitation Issue
                         </h1>
@@ -258,9 +251,6 @@ export default function JoinNeighborhoodPage() {
                       </div>
 
                       <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-black text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5">
-                          RETURN | INVITE ACCEPTANCE
-                        </div>
                         <h1 className="font-display font-black text-4xl sm:text-5xl uppercase tracking-tight leading-none text-white">
                           <SplitText
                             text="You're Invited!"

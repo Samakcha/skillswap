@@ -1527,10 +1527,6 @@ export default function DashboardPage() {
             
             {/* Left Col: Greeting & User Name */}
             <div className="lg:col-span-6 space-y-4.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                <Sparkles className="w-3 h-3 text-[#FF4D00] animate-pulse" />
-                <span>Active Swapper Hub</span>
-              </div>
               <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[0.9] text-white tracking-tight uppercase flex flex-col gap-2">
                 <SplitText
                   text="Welcome back,"

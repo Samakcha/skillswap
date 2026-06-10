@@ -921,10 +921,6 @@ export default function UserProfilePage() {
                 )}
 
                 <div className="space-y-3.5">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-[#FF4D00]/30 rounded-lg font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-widest bg-[#FF4D00]/5 select-none">
-                    <Sparkles className="w-3 h-3 text-[#FF4D00] animate-pulse" />
-                    <span>Verified Swap Member</span>
-                  </div>
                   
                   <h1 className="font-display font-black text-3xl sm:text-4xl leading-[0.9] text-white tracking-tight uppercase">
                     <SplitText

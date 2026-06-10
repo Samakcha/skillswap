@@ -563,10 +563,6 @@ export default function ChatPage() {
 
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none relative z-10 shrink-0">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF4D00] animate-pulse" />
-            <span>Secure Chat Active</span>
-          </div>
         </motion.div>
 
         {/* MESSAGES CHAT LOG WINDOW */}

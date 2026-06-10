@@ -321,9 +321,6 @@ export default function ProfileSetupPage() {
             
             {/* Header Titles */}
             <motion.div variants={FADE_UP} className="space-y-2.5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                RETURN | PROFILE METADATA
-              </div>
               <h1 className="font-display font-black text-white text-[2.6rem] tracking-tight uppercase leading-none">
                 <SplitText
                   text="Configure Profile"

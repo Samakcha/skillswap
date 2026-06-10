@@ -820,10 +820,6 @@ export default function DemoPage() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
                   <div className="lg:col-span-6 space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                      <Sparkles className="w-3 h-3 text-[#FF4D00] animate-pulse" />
-                      <span>DEMO SANDBOX HUB</span>
-                    </div>
                     <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[0.9] text-white tracking-tight uppercase flex flex-col gap-2">
                       <span className="text-white">Welcome back,</span>
                       <span className="text-[#FF4D00]">{MOCK_PROFILE.full_name}</span>

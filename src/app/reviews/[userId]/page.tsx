@@ -203,10 +203,6 @@ export default function ReviewPage() {
 
             {/* Welcome Titles */}
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                <Sparkles className="w-3.5 h-3.5 text-[#FF4D00] animate-pulse" />
-                <span>Build Swapping Stars</span>
-              </div>
               <h2 className="font-display font-black text-white text-[2rem] leading-[1.05] tracking-tight uppercase">
                 Review your <br />
                 <span className="text-[#FF4D00]">local swap.</span>

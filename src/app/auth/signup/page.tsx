@@ -150,9 +150,6 @@ export default function SignUpPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                  RETURN | VOLLEY SECURED
-                </div>
                 <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight leading-none">
                   {redirectMessage}
                 </h2>
@@ -274,9 +271,6 @@ export default function SignUpPage() {
                 
                 {/* Header Titles */}
                 <motion.div variants={FADE_UP} className="space-y-2.5">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                    RETURN | DECLARE YOUR SLOT
-                  </div>
                   <h1 className="font-display font-black text-white text-[2.2rem] tracking-tight uppercase leading-none">
                     <SplitText
                       text="Sign Up Account"

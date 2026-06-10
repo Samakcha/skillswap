@@ -596,10 +596,6 @@ export default function AnnouncementsPage() {
             <div className="absolute inset-0 bg-radial-gradient from-[#FF4D00]/5 to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF4D00]/30 rounded-full font-mono text-[9px] font-bold text-[#FF4D00] uppercase tracking-wider bg-[#FF4D00]/5 select-none">
-                  <Sparkles className="w-3 h-3 text-[#FF4D00] animate-pulse" />
-                  <span>Local Bulletin</span>
-                </div>
                 <h1 className="font-display font-black text-3xl sm:text-4xl leading-[0.9] text-white tracking-tight uppercase flex flex-wrap gap-x-2">
                   <SplitText
                     text="Neighborhood"
