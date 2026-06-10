@@ -423,7 +423,7 @@ export default function MyPostsPage() {
             className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 border-b border-white/10 pb-5"
           >
             {/* Filter buttons */}
-            <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative">
+            <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative custom-scrollbar">
               {/* ALL */}
               <button 
                 onClick={() => setActiveTab('all')}

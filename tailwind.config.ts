@@ -8,6 +8,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: '375px',
+      },
       fontFamily: {
         display: ['var(--font-display)', 'Syne', 'sans-serif'],
         mono: ['var(--font-mono)', 'Space Mono', 'monospace'],

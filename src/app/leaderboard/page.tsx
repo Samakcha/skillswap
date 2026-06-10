@@ -273,7 +273,7 @@ export default function LeaderboardPage() {
           </motion.div>
 
           {/* DYNAMIC LEADERBOARD TABS */}
-          <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative select-none">
+          <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative select-none custom-scrollbar">
             {/* Neighborhood Tab */}
             <button 
               onClick={() => setActiveTab('neighborhood')}

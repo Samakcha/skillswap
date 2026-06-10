@@ -905,7 +905,7 @@ export default function DemoPage() {
                 className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 border-b border-white/10 pb-5"
               >
                 {/* Feeds Tab Selector */}
-                <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative">
+                <div className="flex items-center overflow-x-auto p-1 rounded-2xl bg-black border border-white/10 self-start max-w-full relative custom-scrollbar">
                   {[
                     { id: 'all', label: 'All Swaps', color: 'text-white' },
                     { id: 'offer', label: 'Offering', color: 'text-emerald-400', indicator: 'bg-emerald-500/10 border-emerald-500/30' },
