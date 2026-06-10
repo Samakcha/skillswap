@@ -5,23 +5,15 @@ import { motion, useScroll, useTransform, useSpring } from "framer-motion"
 import { createClient } from "@/lib/supabase"
 import Link from "next/link"
 
-import { ArrowDown, ArrowUpRight, Database, CheckCircle2, AlertCircle, Sparkles, Layers } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowDown, ArrowUpRight, Database, CheckCircle2, AlertCircle, Sparkles, Layers, Home as HomeIcon, Zap, Hammer, Sliders, BookOpen, UserPlus } from "lucide-react"
 import InteractiveSimulator from "@/components/InteractiveSimulator"
 import CardSwap from "@/components/CardSwap"
 import SplitText from "@/components/SplitText"
 import TextType from "@/components/TextType"
 import BackgroundLiquidEther from "@/components/BackgroundLiquidEther"
 import GravityPills from "@/components/GravityPills"
-import PillNav from "@/components/PillNav"
-
-const PILL_NAV_ITEMS = [
-  { label: 'Home', href: '#' },
-  { label: 'Features', href: '#features' },
-  { label: 'Skills', href: '#services' },
-  { label: 'Simulator', href: '#demo' },
-  { label: 'Manifesto', href: '#manifesto-anchor' },
-  { label: 'Join Swap', href: '/auth/signup' }
-];
+import Dock from "@/components/Dock"
 
 
 const SERVICES = [
@@ -33,11 +25,55 @@ const SERVICES = [
 ]
 
 export default function Home() {
+  const router = useRouter()
   const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "table_missing" | "error">("checking")
   const [dbMessage, setDbMessage] = useState("")
   
   const [highlightServices, setHighlightServices] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const dockItems = [
+    { 
+      icon: <HomeIcon size={18} />, 
+      label: 'Home', 
+      onClick: () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    { 
+      icon: <Zap size={18} />, 
+      label: 'Features', 
+      onClick: () => {
+        document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    { 
+      icon: <Hammer size={18} />, 
+      label: 'Skills', 
+      onClick: () => {
+        document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    { 
+      icon: <Sliders size={18} />, 
+      label: 'Simulator', 
+      onClick: () => {
+        document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    { 
+      icon: <BookOpen size={18} />, 
+      label: 'Manifesto', 
+      onClick: () => {
+        document.getElementById('manifesto-anchor')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    { 
+      icon: <UserPlus size={18} />, 
+      label: 'Join', 
+      onClick: () => router.push('/auth/signup')
+    }
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -140,19 +176,14 @@ export default function Home() {
   return (
     <div className="landing-page-root min-h-screen bg-[#FF4D00] text-black flex flex-col font-sans selection:bg-black selection:text-[#FF4D00] relative overflow-x-hidden">
       
-      {/* Mobile Viewport Navigation Menu (PillNav) */}
-      <PillNav
-        logo={<span className="font-display font-black text-xs sm:text-sm tracking-tight text-white uppercase select-none">SKILLSWAP</span>}
-        logoAlt="SKILLSWAP Logo"
-        items={PILL_NAV_ITEMS}
-        ease="power3.easeOut"
-        baseColor="#000000"
-        pillColor="#ffffff"
-        hoveredPillTextColor="#ffffff"
-        pillTextColor="#000000"
-        className="fixed top-6 left-0 w-full z-50 px-6 md:hidden"
-        initialLoadAnimation={true}
-      />
+
+
+      {/* Mobile Viewport Dock Navigation Bar */}
+      <div className="fixed bottom-6 left-0 w-full z-50 flex justify-center md:hidden pointer-events-none">
+        <div className="pointer-events-auto">
+          <Dock items={dockItems} />
+        </div>
+      </div>
 
       {/* 1. FLOATING NAVIGATION BAR */}
       <header className="fixed top-6 left-0 w-full z-50 px-6 hidden md:block">

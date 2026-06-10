@@ -1,0 +1,78 @@
+.dock-outer {
+  margin: 0 0.5rem;
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  position: relative;
+}
+
+.dock-panel {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  width: fit-content;
+  gap: 0.75rem;
+  border-radius: 9999px; /* Rounded pill shape matching brutalist style */
+  background-color: #000000;
+  border: 2px solid #ffffff;
+  padding: 0 0.75rem 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dock-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%; /* Circular items */
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.dock-item:hover,
+.dock-item:focus {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.dock-icon svg {
+  width: 44%;
+  height: 44%;
+  transition: stroke 0.2s ease;
+}
+
+.dock-label {
+  position: absolute;
+  top: -1.75rem;
+  left: 50%;
+  width: fit-content;
+  white-space: pre;
+  border-radius: 9999px; /* Pill labels */
+  border: 1px solid #333;
+  background-color: #000000;
+  padding: 0.25rem 0.75rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ffffff;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 1000;
+}

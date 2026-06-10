@@ -240,7 +240,9 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
     // 7. ResizeObserver to keep boundaries matched to viewport perfectly
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
-        const { width: w, height: h } = entry.contentRect
+        const target = entry.target as HTMLElement
+        const w = target.clientWidth
+        const h = target.clientHeight
         if (w === 0 || h === 0) continue
 
         if (!isInitialized) {
@@ -258,16 +260,40 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
     })
 
     const parent = container.parentElement || container
-    const rect = parent.getBoundingClientRect()
-    if (rect.width > 0 && rect.height > 0) {
-      initPhysics(rect.width, rect.height)
+    const startW = parent.clientWidth
+    const startH = parent.clientHeight
+    if (startW > 0 && startH > 0) {
+      initPhysics(startW, startH)
     }
 
     resizeObserver.observe(parent)
 
+    // Set up intersection observer to reset pills when scrolling into view on mobile
+    let intersectionObserver: IntersectionObserver | null = null
+    if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && isInitialized && currentWidth > 0 && currentHeight > 0) {
+            bodiesData.forEach(({ body }, idx) => {
+              const x = Math.random() * (currentWidth - 160) + 80
+              const spawnRangeY = (currentHeight * 0.5) - 40
+              const y = 40 + (idx / activePills.length) * spawnRangeY
+              Matter.Body.setPosition(body, { x, y })
+              Matter.Body.setVelocity(body, { x: 0, y: 0 })
+              Matter.Body.setAngle(body, 0)
+              Matter.Body.setAngularVelocity(body, 0)
+            })
+          }
+        })
+      }, { threshold: 0.15 })
+
+      intersectionObserver.observe(parent)
+    }
+
     // Cleanup
     return () => {
       resizeObserver.disconnect()
+      intersectionObserver?.disconnect()
       if (isInitialized) {
         cancelAnimationFrame(rafId)
         Matter.Runner.stop(runner)
