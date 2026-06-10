@@ -4,8 +4,8 @@ export type PlanName = 'Free' | 'Plus' | 'Pro'
 
 export async function getUserPlan(userId: string): Promise<PlanName> {
   const supabase = createClient()
-  const { data } = await supabase
-    .from('subscriptions')
+  const { data } = await (supabase
+    .from('subscriptions') as any)
     .select('plan_name, status')
     .eq('user_id', userId)
     .single()
