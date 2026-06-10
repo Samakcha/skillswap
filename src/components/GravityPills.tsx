@@ -47,13 +47,27 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
   const containerRef = useRef<HTMLDivElement>(null)
   const pillRefs = useRef<(HTMLDivElement | null)[]>([])
   const [measured, setMeasured] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const activePills = isMobile ? PILLS_DATA.slice(0, 10) : PILLS_DATA
 
   // Initialize measured array
-  pillRefs.current = pillRefs.current.slice(0, PILLS_DATA.length)
+  pillRefs.current = pillRefs.current.slice(0, activePills.length)
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+
+    setMeasured(false)
 
     let engine: Matter.Engine
     let runner: Matter.Runner
@@ -112,9 +126,9 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
         const x = Math.random() * (startWidth - 160) + 80
         
         // Scale the spawn height to be safely within the top 50% of the viewport (between y = 40 and y = startHeight * 0.5)
-        // This guarantees all 30 pills spawn cleanly inside the box regardless of container dimensions
+        // This guarantees all pills spawn cleanly inside the box regardless of container dimensions
         const spawnRangeY = (startHeight * 0.5) - 40
-        const y = 40 + (idx / PILLS_DATA.length) * spawnRangeY
+        const y = 40 + (idx / activePills.length) * spawnRangeY
         
         const body = Bodies.rectangle(x, y, rect.width, rect.height, {
           restitution: 0.4, // bouncy
@@ -243,7 +257,13 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
       }
     })
 
-    resizeObserver.observe(container)
+    const parent = container.parentElement || container
+    const rect = parent.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) {
+      initPhysics(rect.width, rect.height)
+    }
+
+    resizeObserver.observe(parent)
 
     // Cleanup
     return () => {
@@ -255,7 +275,7 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
         Matter.World.clear(engine.world, false)
       }
     }
-  }, [])
+  }, [isMobile])
 
   return (
     <div
@@ -278,7 +298,7 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
         </div>
       )}
 
-      {PILLS_DATA.map((pill, index) => (
+      {activePills.map((pill, index) => (
         <div
           key={pill.text}
           ref={(el) => {

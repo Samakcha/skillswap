@@ -12,6 +12,16 @@ import SplitText from "@/components/SplitText"
 import TextType from "@/components/TextType"
 import BackgroundLiquidEther from "@/components/BackgroundLiquidEther"
 import GravityPills from "@/components/GravityPills"
+import PillNav from "@/components/PillNav"
+
+const PILL_NAV_ITEMS = [
+  { label: 'Home', href: '#' },
+  { label: 'Features', href: '#features' },
+  { label: 'Skills', href: '#services' },
+  { label: 'Simulator', href: '#demo' },
+  { label: 'Manifesto', href: '#manifesto-anchor' },
+  { label: 'Join Swap', href: '/auth/signup' }
+];
 
 
 const SERVICES = [
@@ -27,6 +37,16 @@ export default function Home() {
   const [dbMessage, setDbMessage] = useState("")
   
   const [highlightServices, setHighlightServices] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Smooth scroll springs to avoid raw scroll reading jitters
   const { scrollY, scrollYProgress } = useScroll();
@@ -50,7 +70,7 @@ export default function Home() {
   const videoY = useTransform(smoothScrollY, [0, 800], [0, 80]);
 
   // Card stack sideways parallax motion tied to page scroll progress
-  const cardParallaxX = useTransform(smoothScrollYProgress, [0.15, 0.45], [60, -40]);
+  const cardParallaxX = useTransform(smoothScrollYProgress, [0.15, 0.45], isMobile ? [8, -8] : [60, -40]);
 
   const manifestoRef = useRef<HTMLDivElement>(null);
 
@@ -120,8 +140,22 @@ export default function Home() {
   return (
     <div className="landing-page-root min-h-screen bg-[#FF4D00] text-black flex flex-col font-sans selection:bg-black selection:text-[#FF4D00] relative overflow-x-hidden">
       
+      {/* Mobile Viewport Navigation Menu (PillNav) */}
+      <PillNav
+        logo={<span className="font-display font-black text-xs sm:text-sm tracking-tight text-white uppercase select-none">SKILLSWAP</span>}
+        logoAlt="SKILLSWAP Logo"
+        items={PILL_NAV_ITEMS}
+        ease="power3.easeOut"
+        baseColor="#000000"
+        pillColor="#ffffff"
+        hoveredPillTextColor="#ffffff"
+        pillTextColor="#000000"
+        className="fixed top-6 left-0 w-full z-50 px-6 md:hidden"
+        initialLoadAnimation={true}
+      />
+
       {/* 1. FLOATING NAVIGATION BAR */}
-      <header className="fixed top-6 left-0 w-full z-50 px-6">
+      <header className="fixed top-6 left-0 w-full z-50 px-6 hidden md:block">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           
           {/* Logo - Archivo Black */}
@@ -240,9 +274,9 @@ export default function Home() {
           >
             <CardSwap 
               delay={4500}
-              cardDistance={28}
-              verticalDistance={26}
-              skewAmount={2}
+              cardDistance={isMobile ? 12 : 28}
+              verticalDistance={isMobile ? 12 : 26}
+              skewAmount={isMobile ? 1 : 2}
               pauseOnHover={true}
               easing="elastic"
             />
@@ -286,8 +320,8 @@ export default function Home() {
           <span className="font-mono text-xs font-bold text-black border-2 border-black px-4 py-2 rounded-full uppercase tracking-wider bg-white">
             PLATFORM PARAMETERS
           </span>
-          <h2 className="font-display font-black text-5xl sm:text-6xl md:text-7xl text-black uppercase tracking-tight leading-[0.9] pt-4">
-            ZERO TRANSACTION COSTS. ONLY PURE VALUE.
+          <h2 className="font-display font-black text-3xl sm:text-5xl md:text-7xl text-black uppercase tracking-tight leading-[0.9] pt-4">
+            ZERO COSTS. ONLY PURE VALUE.
           </h2>
         </motion.div>
 
@@ -300,10 +334,10 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: false, margin: "-100px" }}
             transition={{ type: "spring", stiffness: 60, damping: 15, delay: 0.05 }}
-            className="bg-black text-white p-8 border-2 border-black hover:scale-105 hover:-translate-y-2 transition-all duration-200 flex flex-col justify-between min-h-[300px] shadow-[6px_6px_0px_#000000]"
+            className="bg-black text-white p-8 border-2 border-black hover:scale-105 hover:-translate-y-2 transition-all duration-200 flex flex-col items-center md:items-start text-center md:text-left justify-between min-h-[300px] shadow-[6px_6px_0px_#000000]"
           >
             <div>
-              <div className="w-12 h-12 bg-[#FF4D00] text-black flex items-center justify-center font-display text-xl mb-8">
+              <div className="w-12 h-12 bg-[#FF4D00] text-black flex items-center justify-center font-display text-xl mb-8 mx-auto md:mx-0">
                 01
               </div>
               <h3 className="font-display font-bold text-xl uppercase tracking-tight mb-4">NEIGHBORHOOD ONLY</h3>
@@ -320,10 +354,10 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: false, margin: "-100px" }}
             transition={{ type: "spring", stiffness: 60, damping: 15, delay: 0.15 }}
-            className="bg-black text-white p-8 border-2 border-black hover:scale-105 hover:-translate-y-2 transition-all duration-200 flex flex-col justify-between min-h-[300px] shadow-[6px_6px_0px_#000000]"
+            className="bg-black text-white p-8 border-2 border-black hover:scale-105 hover:-translate-y-2 transition-all duration-200 flex flex-col items-center md:items-start text-center md:text-left justify-between min-h-[300px] shadow-[6px_6px_0px_#000000]"
           >
             <div>
-              <div className="w-12 h-12 bg-[#FF4D00] text-black flex items-center justify-center font-display text-xl mb-8">
+              <div className="w-12 h-12 bg-[#FF4D00] text-black flex items-center justify-center font-display text-xl mb-8 mx-auto md:mx-0">
                 02
               </div>
               <h3 className="font-display font-bold text-xl uppercase tracking-tight mb-4">ABSOLUTE ZERO CASH</h3>
@@ -340,10 +374,10 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: false, margin: "-100px" }}
             transition={{ type: "spring", stiffness: 60, damping: 15, delay: 0.25 }}
-            className="bg-black text-white p-8 border-2 border-black hover:scale-105 hover:-translate-y-2 transition-all duration-200 flex flex-col justify-between min-h-[300px] shadow-[6px_6px_0px_#000000]"
+            className="bg-black text-white p-8 border-2 border-black hover:scale-105 hover:-translate-y-2 transition-all duration-200 flex flex-col items-center md:items-start text-center md:text-left justify-between min-h-[300px] shadow-[6px_6px_0px_#000000]"
           >
             <div>
-              <div className="w-12 h-12 bg-[#FF4D00] text-black flex items-center justify-center font-display text-xl mb-8">
+              <div className="w-12 h-12 bg-[#FF4D00] text-black flex items-center justify-center font-display text-xl mb-8 mx-auto md:mx-0">
                 03
               </div>
               <h3 className="font-display font-bold text-xl uppercase tracking-tight mb-4">VERIFIED TRUST</h3>
@@ -372,8 +406,8 @@ export default function Home() {
             <span className="font-mono text-xs font-bold text-white border-2 border-white px-4 py-2 rounded-full uppercase tracking-wider bg-transparent">
               EXCHANGE CATEGORIES
             </span>
-            <h2 className="font-display font-black text-5xl sm:text-6xl md:text-7xl uppercase tracking-tight leading-[0.9] pt-4">
-              ACTIVE NEIGHBORHOOD SKILLS
+            <h2 className="font-display font-black text-3xl sm:text-5xl md:text-7xl uppercase tracking-tight leading-[0.9] pt-4">
+              ACTIVE LOCAL SKILLS
             </h2>
           </motion.div>
 
@@ -386,28 +420,28 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false, margin: "-60px" }}
                 transition={{ type: "spring", stiffness: 70, damping: 16, delay: idx * 0.08 }}
-                className={`group border-t border-white/20 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 cursor-pointer hover:bg-white/5 transition-all duration-500 px-4 select-none relative overflow-hidden ${
+                className={`group border-t border-white/20 py-8 flex flex-col md:flex-row items-center md:items-center justify-between gap-6 cursor-pointer hover:bg-white/5 transition-all duration-500 px-4 select-none relative overflow-hidden ${
                   highlightServices ? 'bg-[#FF4D00]/10 border-t-[#FF4D00]' : ''
                 }`}
                 style={{
                   transitionDelay: highlightServices ? `${idx * 100}ms` : '0ms',
-                  transform: highlightServices ? 'translateX(24px)' : 'none',
+                  transform: highlightServices ? (isMobile ? 'translateX(8px)' : 'translateX(24px)') : 'none',
                 }}
               >
-                <div className="flex items-start md:items-center gap-6 md:gap-12 flex-1 group-hover:translate-x-4 transition-transform duration-300">
+                <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-12 flex-1 text-center md:text-left group-hover:translate-x-0 md:group-hover:translate-x-4 transition-transform duration-300">
                   {/* Leading number */}
-                  <span className="font-mono text-lg font-bold text-[#FF4D00] mt-1 md:mt-0">
+                  <span className="font-mono text-lg font-bold text-[#FF4D00] mt-0 text-center md:text-left">
                     {service.index}
                   </span>
                   
                   {/* Title and pill tags */}
-                  <div className="space-y-4">
-                    <h3 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight leading-none text-white">
+                  <div className="space-y-4 text-center md:text-left">
+                    <h3 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight leading-none text-white text-center md:text-left">
                       {service.title}
                     </h3>
                     
                     {/* Tags row */}
-                    <div className="flex flex-wrap gap-2 pt-1">
+                    <div className="flex flex-wrap gap-2 pt-1 justify-center md:justify-start">
                       {service.tags.map((tag) => (
                         <span 
                           key={tag} 
@@ -546,13 +580,13 @@ export default function Home() {
           {/* Panel 1 */}
           <motion.div 
             style={{ y: manifestoY1, opacity: manifestoOpacity1 }}
-            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative"
+            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative text-center md:text-left"
           >
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#FF4D00]" />
-            <div className="md:col-span-3">
+            <div className="absolute top-0 left-0 w-full h-1 md:w-2 md:h-full bg-[#FF4D00]" />
+            <div className="md:col-span-3 text-center md:text-left">
               <span className="font-display font-black text-6xl text-[#FF4D00]">01</span>
             </div>
-            <div className="md:col-span-9 space-y-4">
+            <div className="md:col-span-9 space-y-4 text-center md:text-left">
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-white uppercase tracking-tight">
                 Your Block is Full of Masters
               </h3>
@@ -565,13 +599,13 @@ export default function Home() {
           {/* Panel 2 */}
           <motion.div 
             style={{ y: manifestoY2, opacity: manifestoOpacity2 }}
-            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative"
+            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative text-center md:text-left"
           >
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#FF4D00]" />
-            <div className="md:col-span-3">
+            <div className="absolute top-0 left-0 w-full h-1 md:w-2 md:h-full bg-[#FF4D00]" />
+            <div className="md:col-span-3 text-center md:text-left">
               <span className="font-display font-black text-6xl text-[#FF4D00]">02</span>
             </div>
-            <div className="md:col-span-9 space-y-4">
+            <div className="md:col-span-9 space-y-4 text-center md:text-left">
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-white uppercase tracking-tight">
                 An Hour is Always an Hour
               </h3>
@@ -584,13 +618,13 @@ export default function Home() {
           {/* Panel 3 */}
           <motion.div 
             style={{ y: manifestoY3, opacity: manifestoOpacity3 }}
-            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative"
+            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative text-center md:text-left"
           >
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#FF4D00]" />
-            <div className="md:col-span-3">
+            <div className="absolute top-0 left-0 w-full h-1 md:w-2 md:h-full bg-[#FF4D00]" />
+            <div className="md:col-span-3 text-center md:text-left">
               <span className="font-display font-black text-6xl text-[#FF4D00]">03</span>
             </div>
-            <div className="md:col-span-9 space-y-4">
+            <div className="md:col-span-9 space-y-4 text-center md:text-left">
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-white uppercase tracking-tight">
                 The Verified Three-Mile Loop
               </h3>
@@ -603,13 +637,13 @@ export default function Home() {
           {/* Panel 4 */}
           <motion.div 
             style={{ y: manifestoY4, opacity: manifestoOpacity4 }}
-            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative"
+            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative text-center md:text-left"
           >
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#FF4D00]" />
-            <div className="md:col-span-3">
+            <div className="absolute top-0 left-0 w-full h-1 md:w-2 md:h-full bg-[#FF4D00]" />
+            <div className="md:col-span-3 text-center md:text-left">
               <span className="font-display font-black text-6xl text-[#FF4D00]">04</span>
             </div>
-            <div className="md:col-span-9 space-y-4">
+            <div className="md:col-span-9 space-y-4 text-center md:text-left">
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-white uppercase tracking-tight">
                 Silence the Digital Noise
               </h3>
@@ -622,13 +656,13 @@ export default function Home() {
           {/* Panel 5 */}
           <motion.div 
             style={{ y: manifestoY5, opacity: manifestoOpacity5 }}
-            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative"
+            className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/5 border border-white/10 p-8 sm:p-10 backdrop-blur-md shadow-2xl relative text-center md:text-left"
           >
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#FF4D00]" />
-            <div className="md:col-span-3">
+            <div className="absolute top-0 left-0 w-full h-1 md:w-2 md:h-full bg-[#FF4D00]" />
+            <div className="md:col-span-3 text-center md:text-left">
               <span className="font-display font-black text-6xl text-[#FF4D00]">05</span>
             </div>
-            <div className="md:col-span-9 space-y-4">
+            <div className="md:col-span-9 space-y-4 text-center md:text-left">
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-white uppercase tracking-tight">
                 Trust Over Transactions
               </h3>
@@ -642,10 +676,12 @@ export default function Home() {
       </section>
 
       {/* 8. GIANT CTA SECTION WITH VIEWPANEL ZOOM-UPS & INTERACTIVE GRAVITY PILLS BACKGROUND */}
-      <section id="manifesto" className="bg-[#FF4D00] text-black py-32 px-6 border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10 overflow-hidden w-full select-none">
+      <section id="manifesto" className="bg-[#FF4D00] text-black py-32 px-6 border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10 overflow-hidden w-full select-none min-h-[700px] md:min-h-0">
         
         {/* Interactive Gravity Physics Pills bouncing behind the text in the background */}
         <GravityPills asBackground />
+
+
 
         <div className="max-w-4xl w-full mx-auto space-y-12 relative z-10 pointer-events-none">
           

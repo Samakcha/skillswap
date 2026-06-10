@@ -81,10 +81,10 @@ export default function InteractiveSimulator() {
         {matchingState === 'idle' && (
           <div className="flex-1 flex flex-col justify-between">
             <div>
-              <h3 className="font-display font-bold text-2xl text-white mb-2 leading-none uppercase tracking-tight">
+              <h3 className="font-display font-bold text-2xl text-white mb-2 leading-none uppercase tracking-tight text-center sm:text-left">
                 SIMULATE MATCH
               </h3>
-              <p className="font-sans text-xs text-gray-400 mb-6 font-medium">
+              <p className="font-sans text-xs text-gray-400 mb-6 font-medium text-center sm:text-left">
                 CHOOSE A SKILL TO ACQUIRE AND ONE TO SHARE. EXPERIMENTS RUN LOCALLY.
               </p>
 
