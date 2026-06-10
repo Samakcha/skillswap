@@ -58,7 +58,7 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  const activePills = isMobile ? PILLS_DATA.slice(0, 10) : PILLS_DATA
+  const activePills = isMobile ? PILLS_DATA.slice(0, 8) : PILLS_DATA
 
   // Initialize measured array
   pillRefs.current = pillRefs.current.slice(0, activePills.length)
@@ -107,9 +107,10 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
       // - Left Wall: Right surface is exactly x = 0
       // - Right Wall: Left surface is exactly x = startWidth
       // - Ceiling: Bottom surface is exactly y = 0
+      const wallPadding = isMobile ? 32 : 0
       ground = Bodies.rectangle(startWidth / 2, startHeight + 150, startWidth + 2000, 300, { isStatic: true, friction: 0.2 })
-      leftWall = Bodies.rectangle(-150, startHeight / 2, 300, startHeight + 2000, { isStatic: true, friction: 0.2 })
-      rightWall = Bodies.rectangle(startWidth + 150, startHeight / 2, 300, startHeight + 2000, { isStatic: true, friction: 0.2 })
+      leftWall = Bodies.rectangle(-150 + wallPadding, startHeight / 2, 300, startHeight + 2000, { isStatic: true, friction: 0.2 })
+      rightWall = Bodies.rectangle(startWidth + 150 - wallPadding, startHeight / 2, 300, startHeight + 2000, { isStatic: true, friction: 0.2 })
       ceiling = Bodies.rectangle(startWidth / 2, -150, startWidth + 2000, 300, { isStatic: true })
 
       // 1. Measure the pills in DOM now that we have valid container size
@@ -123,7 +124,8 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
       // 2. Create bodies for each pill with rounded capsule corner boundary box (chamfer)
       bodiesData = rects.map((rect, idx) => {
         // Scatter initial positions staggered below the ceiling directly inside the viewport
-        const x = Math.random() * (startWidth - 160) + 80
+        const wallPadding = isMobile ? 32 : 0
+        const x = Math.random() * (startWidth - 160 - 2 * wallPadding) + 80 + wallPadding
         
         // Scale the spawn height to be safely within the top 50% of the viewport (between y = 40 and y = startHeight * 0.5)
         // This guarantees all pills spawn cleanly inside the box regardless of container dimensions
@@ -185,11 +187,15 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
           let clampedY = body.position.y
           let changed = false
 
-          if (clampedX < halfW) {
-            clampedX = halfW
+          const wallPadding = isMobile ? 32 : 0
+          const minX = halfW + wallPadding
+          const maxX = currentWidth - halfW - wallPadding
+
+          if (clampedX < minX) {
+            clampedX = minX
             changed = true
-          } else if (clampedX > currentWidth - halfW) {
-            clampedX = currentWidth - halfW
+          } else if (clampedX > maxX) {
+            clampedX = maxX
             changed = true
           }
 
@@ -207,7 +213,7 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
             // Re-calculate velocity to bounce slightly off bounds instead of escaping
             let vx = body.velocity.x
             let vy = body.velocity.y
-            if ((body.position.x <= halfW && vx < 0) || (body.position.x >= currentWidth - halfW && vx > 0)) {
+            if ((body.position.x <= minX && vx < 0) || (body.position.x >= maxX && vx > 0)) {
               vx = -vx * 0.2
             }
             if ((body.position.y <= halfH && vy < 0) || (body.position.y >= currentHeight - halfH && vy > 0)) {
@@ -251,22 +257,22 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
           currentWidth = w
           currentHeight = h
           // Keep boundaries perfectly locked on container bounds during viewport changes
+          const wallPadding = isMobile ? 32 : 0
           Matter.Body.setPosition(ground, { x: w / 2, y: h + 150 })
-          Matter.Body.setPosition(rightWall, { x: w + 150, y: h / 2 })
-          Matter.Body.setPosition(leftWall, { x: -150, y: h / 2 })
+          Matter.Body.setPosition(rightWall, { x: w + 150 - wallPadding, y: h / 2 })
+          Matter.Body.setPosition(leftWall, { x: -150 + wallPadding, y: h / 2 })
           Matter.Body.setPosition(ceiling, { x: w / 2, y: -150 })
         }
       }
     })
 
-    const parent = container.parentElement || container
-    const startW = parent.clientWidth
-    const startH = parent.clientHeight
+    const startW = container.clientWidth
+    const startH = container.clientHeight
     if (startW > 0 && startH > 0) {
       initPhysics(startW, startH)
     }
 
-    resizeObserver.observe(parent)
+    resizeObserver.observe(container)
 
     // Set up intersection observer to reset pills when scrolling into view on mobile
     let intersectionObserver: IntersectionObserver | null = null
@@ -275,7 +281,8 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
         entries.forEach((entry) => {
           if (entry.isIntersecting && isInitialized && currentWidth > 0 && currentHeight > 0) {
             bodiesData.forEach(({ body }, idx) => {
-              const x = Math.random() * (currentWidth - 160) + 80
+              const wallPadding = isMobile ? 32 : 0
+              const x = Math.random() * (currentWidth - 160 - 2 * wallPadding) + 80 + wallPadding
               const spawnRangeY = (currentHeight * 0.5) - 40
               const y = 40 + (idx / activePills.length) * spawnRangeY
               Matter.Body.setPosition(body, { x, y })
@@ -287,7 +294,7 @@ export default function GravityPills({ asBackground = false }: { asBackground?: 
         })
       }, { threshold: 0.15 })
 
-      intersectionObserver.observe(parent)
+      intersectionObserver.observe(container)
     }
 
     // Cleanup

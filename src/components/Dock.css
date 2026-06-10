@@ -1,6 +1,7 @@
 .dock-outer {
   margin: 0 0.5rem;
   display: flex;
+  width: 100%;
   max-width: 100%;
   align-items: center;
   position: relative;
@@ -18,7 +19,7 @@
   border-radius: 9999px; /* Rounded pill shape matching brutalist style */
   background-color: #000000;
   border: 2px solid #ffffff;
-  padding: 0.5rem 0.75rem 0;
+  padding: 0.5rem 0.75rem 0.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 

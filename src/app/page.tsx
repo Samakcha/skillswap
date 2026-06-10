@@ -67,11 +67,6 @@ export default function Home() {
       onClick: () => {
         document.getElementById('manifesto-anchor')?.scrollIntoView({ behavior: 'smooth' });
       }
-    },
-    { 
-      icon: <UserPlus size={18} />, 
-      label: 'Join', 
-      onClick: () => router.push('/auth/signup')
     }
   ];
 
@@ -179,8 +174,8 @@ export default function Home() {
 
 
       {/* Mobile Viewport Dock Navigation Bar */}
-      <div className="fixed top-6 left-0 w-full z-50 flex justify-center md:hidden pointer-events-none">
-        <div className="pointer-events-auto">
+      <div className="fixed top-6 left-0 w-full z-50 px-6 md:hidden pointer-events-none">
+        <div className="pointer-events-auto w-full">
           <Dock items={dockItems} />
         </div>
       </div>
@@ -707,14 +702,12 @@ export default function Home() {
       </section>
 
       {/* 8. GIANT CTA SECTION WITH VIEWPANEL ZOOM-UPS & INTERACTIVE GRAVITY PILLS BACKGROUND */}
-      <section id="manifesto" className="bg-[#FF4D00] text-black py-32 px-6 border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10 overflow-hidden w-full select-none min-h-[700px] md:min-h-0">
+      <section id="manifesto" className="bg-[#FF4D00] text-black border-t-2 border-black flex flex-col items-center justify-center text-center relative z-10 overflow-hidden w-full select-none h-[100dvh] md:h-auto">
         
         {/* Interactive Gravity Physics Pills bouncing behind the text in the background */}
         <GravityPills asBackground />
 
-
-
-        <div className="max-w-4xl w-full mx-auto space-y-12 relative z-10 pointer-events-none">
+        <div className="max-w-4xl w-full mx-auto py-32 px-6 space-y-12 relative z-10 pointer-events-none">
           
           <motion.h2
             initial={{ opacity: 0, y: 50 }}
